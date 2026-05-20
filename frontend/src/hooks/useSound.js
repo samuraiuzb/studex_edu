@@ -20,7 +20,9 @@ export function useSound() {
     const play = useCallback((type) => {
         if (!enabled) return
         try {
-            const audio = new Audio(`/sounds/${type}.mp3`)
+            // Use /static/ prefix for production monolith compatibility
+            const path = window.location.hostname === 'localhost' ? `/sounds/${type}.mp3` : `/static/sounds/${type}.mp3`
+            const audio = new Audio(path)
             audio.volume = 0.6
             audio.play().catch(() => { }) // Ignore auto-play policy errors
         } catch (_) { }
