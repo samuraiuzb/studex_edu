@@ -36,6 +36,6 @@ ENV DATABASE_URL=sqlite:///db.sqlite3
 # Collect static files (WhiteNoise will handle them)
 RUN python manage.py collectstatic --no-input
 
-# Expose port and run gunicorn using the PORT environment variable provided by Render
+# Expose port and run migrations then gunicorn
 EXPOSE 8000
-CMD ["sh", "-c", "gunicorn config.wsgi --bind 0.0.0.0:${PORT:-8000}"]
+CMD ["sh", "-c", "python manage.py migrate && gunicorn config.wsgi --bind 0.0.0.0:${PORT:-8000}"]
