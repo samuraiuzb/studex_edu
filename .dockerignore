@@ -3,20 +3,18 @@
 .gitignore
 
 # Python
-**/__pycache__/
+__pycache__/
 *.pyc
 venv/
 .env
-db.sqlite3
 
 # Node
-**/node_modules/
-**/dist/
+node_modules/
+npm-debug.log
 
-# Docker
-Dockerfile
-.dockerignore
+# Database
+backend/db.sqlite3
+*.sqlite3
 
-# OS files
+# OS
 .DS_Store
-Thumbs.db

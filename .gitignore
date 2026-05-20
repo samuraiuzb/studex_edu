@@ -1,23 +1,54 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+env/
 venv/
-.env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+backend/db.sqlite3
+backend/db.sqlite3-journal
 db.sqlite3
+.env
+backend/.env
+frontend/.env
 *.sqlite3
 
-# Node
+# Node / Frontend
 node_modules/
+frontend/node_modules/
 dist/
+build/
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# OS
+# OS / IDE
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
 
 # Docker
-.DS_Store
+.dockerignore
 *.log
+docker-compose.override.yml
+
+# Media
+backend/uploads/
+uploads/
