@@ -15,6 +15,7 @@ export default function Register() {
         full_name: '', role: 'student', invite_code: searchParams.get('invite_code') || ''
     })
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
 
     const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }))
 
@@ -98,11 +99,43 @@ export default function Register() {
                         )}
                         <div>
                             <label className="input-label">Parol</label>
-                            <input className="input" type="password" placeholder="••••••••" value={form.password} onChange={set('password')} required />
+                            <div className="relative">
+                                <input
+                                    className="input pr-10"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="••••••••"
+                                    value={form.password}
+                                    onChange={set('password')}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors"
+                                >
+                                    {showPassword ? '👁️‍🗨️' : '👁️'}
+                                </button>
+                            </div>
                         </div>
                         <div>
                             <label className="input-label">Parolni takrorlang</label>
-                            <input className="input" type="password" placeholder="••••••••" value={form.password2} onChange={set('password2')} required />
+                            <div className="relative">
+                                <input
+                                    className="input pr-10"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="••••••••"
+                                    value={form.password2}
+                                    onChange={set('password2')}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors"
+                                >
+                                    {showPassword ? '👁️‍🗨️' : '👁️'}
+                                </button>
+                            </div>
                         </div>
 
                         <button type="submit" disabled={loading} className="btn-primary btn-lg w-full justify-center mt-2">

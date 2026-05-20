@@ -9,6 +9,7 @@ export default function ResetPassword() {
     const [password, setPassword] = useState('')
     const [password2, setPassword2] = useState('')
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
 
     async function handleSubmit(e) {
         e.preventDefault()
@@ -48,26 +49,44 @@ export default function ResetPassword() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="input-label">Yangi parol</label>
-                            <input
-                                className="input"
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                                required
-                                minLength={6}
-                            />
+                            <div className="relative">
+                                <input
+                                    className="input pr-10"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                    required
+                                    minLength={6}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors"
+                                >
+                                    {showPassword ? '👁️‍🗨️' : '👁️'}
+                                </button>
+                            </div>
                         </div>
                         <div>
                             <label className="input-label">Parolni takrorlang</label>
-                            <input
-                                className="input"
-                                type="password"
-                                placeholder="••••••••"
-                                value={password2}
-                                onChange={e => setPassword2(e.target.value)}
-                                required
-                            />
+                            <div className="relative">
+                                <input
+                                    className="input pr-10"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="••••••••"
+                                    value={password2}
+                                    onChange={e => setPassword2(e.target.value)}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors"
+                                >
+                                    {showPassword ? '👁️‍🗨️' : '👁️'}
+                                </button>
+                            </div>
                         </div>
                         <button type="submit" disabled={loading} className="btn-primary btn-lg w-full justify-center mt-2">
                             {loading ? (

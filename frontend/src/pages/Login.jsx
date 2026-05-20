@@ -10,7 +10,7 @@ export default function Login() {
     const { login } = useAuth()
     const navigate = useNavigate()
     const [form, setForm] = useState({ username: '', password: '' })
-    const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
 
     async function handleSubmit(e) {
         e.preventDefault()
@@ -62,14 +62,24 @@ export default function Login() {
                                     Parolni unutdingizmi?
                                 </Link>
                             </div>
-                            <input
-                                className="input"
-                                type="password"
-                                placeholder="••••••••"
-                                value={form.password}
-                                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                                required
-                            />
+                            <div className="relative">
+                                <input
+                                    className="input pr-10"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="••••••••"
+                                    value={form.password}
+                                    onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors"
+                                    title={showPassword ? "Berkitish" : "Ko'rsatish"}
+                                >
+                                    {showPassword ? '👁️‍🗨️' : '👁️'}
+                                </button>
+                            </div>
                         </div>
                         <button
                             type="submit"
