@@ -1,0 +1,13 @@
+@echo off
+echo === MathTestUZ Backend ===
+cd /d "%~dp0backend"
+echo [1/4] Installing dependencies...
+pip install -r requirements.txt
+echo [2/4] Running migrations...
+python manage.py makemigrations
+python manage.py migrate
+echo [3/4] Creating superuser (skip if already exists)...
+echo from api.models import User; User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin','admin@mathtestuz.uz','admin123', role='teacher', full_name='Admin') | python manage.py shell
+echo [4/4] Starting server on http://localhost:8000 ...
+python manage.py runserver
+pause

@@ -1,0 +1,2 @@
+# This directory stores uploaded materials (PDF, video, images)
+# Files are uploaded via the Django API and served from /media/

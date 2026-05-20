@@ -1,0 +1,22 @@
+# Git
+.git
+.gitignore
+
+# Python
+**/__pycache__/
+*.pyc
+venv/
+.env
+db.sqlite3
+
+# Node
+**/node_modules/
+**/dist/
+
+# Docker
+Dockerfile
+.dockerignore
+
+# OS files
+.DS_Store
+Thumbs.db
