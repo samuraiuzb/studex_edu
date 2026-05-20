@@ -20,20 +20,15 @@ RUN apt-get update && apt-get install -y \
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend files
+# Copy all project files into /app
 COPY backend/ ./
-
-# Copy built frontend files from Stage 1 to a folder where Django can find them
-# settings.py looks for BASE_DIR.parent / 'frontend' / 'dist'
-# If BASE_DIR is /app (backend root), then BASE_DIR.parent is /
-RUN mkdir -p /frontend
-COPY --from=frontend-builder /app/frontend/dist /frontend/dist
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 # Set dummy environment variables for collectstatic
 ENV SECRET_KEY=dummy
 ENV DATABASE_URL=sqlite:///db.sqlite3
 
-# Collect static files (WhiteNoise will handle them)
+# Collect static files
 RUN python manage.py collectstatic --no-input
 
 # Expose port and run migrations then gunicorn

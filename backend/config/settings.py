@@ -50,7 +50,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR.parent / 'frontend' / 'dist'], # React build folder
+        'DIRS': [BASE_DIR / 'frontend' / 'dist'], # React build folder
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -92,10 +92,11 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STATICFILES_DIRS = [
-    BASE_DIR.parent / 'frontend' / 'dist',
+    BASE_DIR / 'frontend' / 'dist',
 ]
 
-WHITENOISE_ROOT = BASE_DIR.parent / 'frontend' / 'dist'
+# We don't need WHITENOISE_ROOT if we use base: '/static/'
+# This ensures all assets are served through /static/
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR.parent / 'uploads'
