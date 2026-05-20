@@ -16,17 +16,16 @@ const TYPE_LABELS = { pdf: 'PDF', video: 'Video', image: 'Rasm', youtube: 'YouTu
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function getYouTubeId(url) {
-    if (!url) return null
-    try {
-        const u = new URL(url)
-        if (u.hostname.includes('youtu.be')) return u.pathname.slice(1)
-        if (u.hostname.includes('youtube.com')) return u.searchParams.get('v')
-    } catch (_) { }
-    return null
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
 }
 function toEmbedUrl(url) {
     const id = getYouTubeId(url)
-    return id ? `https://www.youtube.com/embed/${id}` : null
+    if (!id) return null;
+    const origin = window.location.origin
+    return `https://www.youtube.com/embed/${id}?enablejsapi=1&origin=${encodeURIComponent(origin)}`
 }
 
 // ─── Helper: is this a text-based file? ─────────────────────────
