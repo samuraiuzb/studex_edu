@@ -3,7 +3,6 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
-from .auth_views import PasswordResetRequestView, PasswordResetConfirmView
 
 urlpatterns = [
     # ─── Auth ───────────────────────────────────────────────────────
@@ -11,8 +10,6 @@ urlpatterns = [
     path('auth/login/', views.LoginView.as_view(), name='login'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/me/', views.MeView.as_view(), name='me'),
-    path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password_reset'),
-    path('auth/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
 
     # ─── Teacher ─────────────────────────────────────────────────────
     path('teacher/dashboard/', views.TeacherDashboardView.as_view(), name='teacher-dashboard'),
