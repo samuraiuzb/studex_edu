@@ -3,6 +3,12 @@
 from django.db import migrations, models
 
 
+def populate_emails(apps, schema_editor):
+    User = apps.get_model('api', 'User')
+    for user in User.objects.filter(models.Q(email='') | models.Q(email__isnull=True)):
+        user.email = f"{user.username}@example.com"
+        user.save()
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,6 +16,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(populate_emails),
         migrations.AlterField(
             model_name='user',
             name='email',
