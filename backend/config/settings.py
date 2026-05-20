@@ -95,8 +95,8 @@ STATICFILES_DIRS = [
     BASE_DIR / 'frontend' / 'dist',
 ]
 
-# We don't need WHITENOISE_ROOT if we use base: '/static/'
-# This ensures all assets are served through /static/
+# Serve the React frontend through WhiteNoise at the root level
+WHITENOISE_ROOT = BASE_DIR / 'frontend' / 'dist'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR.parent / 'uploads'
