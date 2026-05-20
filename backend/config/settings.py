@@ -95,6 +95,8 @@ STATICFILES_DIRS = [
     BASE_DIR.parent / 'frontend' / 'dist',
 ]
 
+WHITENOISE_ROOT = BASE_DIR.parent / 'frontend' / 'dist'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR.parent / 'uploads'
 
