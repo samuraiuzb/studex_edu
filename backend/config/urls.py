@@ -12,10 +12,14 @@ def api_root(request):
 from django.views.generic import TemplateView
 from django.urls import re_path
 
+from django.views.static import serve
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
+    # Serve media files in production (limited but works for simple setups)
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     # Serve React App for all other routes
     re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] # Note: static(settings.MEDIA_URL) removed as re_path handles it now
         

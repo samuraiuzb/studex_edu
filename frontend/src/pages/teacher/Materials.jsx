@@ -35,9 +35,6 @@ function MaterialViewer({ material, onClose }) {
     if (!material) return null
 
     let fileUrl = material.file || ''
-    if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
-        try { fileUrl = new URL(fileUrl).pathname } catch (_) { }
-    }
 
     const embedUrl = material.youtube_url ? toEmbedUrl(material.youtube_url) : null
 
