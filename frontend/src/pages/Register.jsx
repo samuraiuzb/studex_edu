@@ -11,7 +11,7 @@ export default function Register() {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const [form, setForm] = useState({
-        username: '', password: '', password2: '',
+        username: '', email: '', password: '', password2: '',
         full_name: '', role: 'student', invite_code: searchParams.get('invite_code') || ''
     })
     const [loading, setLoading] = useState(false)
@@ -81,6 +81,10 @@ export default function Register() {
                         <div>
                             <label className="input-label">To'liq ism</label>
                             <input className="input" placeholder="Ism Familiya" value={form.full_name} onChange={set('full_name')} required />
+                        </div>
+                        <div>
+                            <label className="input-label">Elektron pochta (Email)</label>
+                            <input className="input" type="email" placeholder="example@mail.com" value={form.email} onChange={set('email')} required />
                         </div>
                         <div>
                             <label className="input-label">Foydalanuvchi nomi</label>

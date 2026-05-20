@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import TeacherDashboard from './pages/teacher/Dashboard'
 import TeacherTests from './pages/teacher/Tests'
 import TeacherTestDetail from './pages/teacher/TestDetail'
@@ -43,6 +45,8 @@ function AppRoutes() {
         <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
 
             {/* Teacher routes */}
             <Route path="/teacher" element={<Protected role="teacher"><TeacherDashboard /></Protected>} />

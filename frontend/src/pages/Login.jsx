@@ -56,7 +56,12 @@ export default function Login() {
                             />
                         </div>
                         <div>
-                            <label className="input-label">Parol</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="input-label mb-0">Parol</label>
+                                <Link to="/forgot-password" size="sm" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                                    Parolni unutdingizmi?
+                                </Link>
+                            </div>
                             <input
                                 className="input"
                                 type="password"

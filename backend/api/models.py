@@ -12,6 +12,7 @@ from django.utils import timezone
 
 class User(AbstractUser):
     """Extended user with role (teacher / student) and class info."""
+    email = models.EmailField(unique=True)
     ROLE_CHOICES = [
         ('teacher', 'O\'qituvchi'),
         ('student', 'O\'quvchi'),
