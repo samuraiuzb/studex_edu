@@ -509,17 +509,20 @@ class MyClassroomsView(generics.ListAPIView):
         return self.request.user.classrooms.all().order_by('-created_at')
 
 class StudentMaterialsView(generics.ListAPIView):
-    """GET /api/student/materials/ — Materials available to student's class."""
+    """GET /api/student/materials/ — Materials available to student's class or public."""
     serializer_class = MaterialSerializer
-    permission_classes = [IsStudent]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         user = self.request.user
-        return Material.objects.filter(
-            Q(class_name=user.class_name) | 
-            Q(class_name='') |
-            Q(classroom__in=user.classrooms.all())
-        ).distinct().order_by('-created_at')
+        if user.is_authenticated:
+            return Material.objects.filter(
+                Q(class_name=user.class_name) | 
+                Q(class_name='') |
+                Q(classroom__in=user.classrooms.all()) |
+                Q(access_type='public')
+            ).distinct().order_by('-created_at')
+        return Material.objects.filter(access_type='public').order_by('-created_at')
 
 
 class StudentMarkMaterialReadView(APIView):
@@ -545,19 +548,21 @@ class StudentMarkMaterialReadView(APIView):
 
 
 class StudentTestListView(generics.ListAPIView):
-    """GET /api/student/tests/ — Tests available to this student."""
+    """GET /api/student/tests/ — Tests available to this student or public."""
     serializer_class = TestSerializer
-    permission_classes = [IsStudent]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         user = self.request.user
-        return Test.objects.filter(
-            is_active=True
-        ).filter(
-            Q(access_type='public') | 
-            Q(allowed_class=user.class_name) |
-            Q(classroom__in=user.classrooms.all())
-        ).distinct().order_by('-created_at')
+        if user.is_authenticated:
+            return Test.objects.filter(
+                is_active=True
+            ).filter(
+                Q(access_type='public') | 
+                Q(allowed_class=user.class_name) |
+                Q(classroom__in=user.classrooms.all())
+            ).distinct().order_by('-created_at')
+        return Test.objects.filter(is_active=True, access_type='public').order_by('-created_at')
 
 
 class StudentStartAttemptView(APIView):
@@ -774,12 +779,23 @@ class StudentHistoryView(APIView):
 
 
 class StudentLeaderboardView(APIView):
-    """GET /api/student/leaderboard/ — Top students by avg score in same class."""
-    permission_classes = [IsStudent]
+    """GET /api/student/leaderboard/ — Top students by avg score or global XP."""
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request):
         if not request.user.is_authenticated:
-            return Response(status=401)
+            # Global leaderboard for guests
+            students = User.objects.filter(role='student').order_by('-total_xp')[:10]
+            board = []
+            for i, s in enumerate(students):
+                board.append({
+                    'rank': i + 1,
+                    'full_name': s.full_name or s.username,
+                    'total_xp': s.total_xp,
+                    'level': s.level,
+                    'class_name': s.class_name or '-'
+                })
+            return Response(board)
             
         classrooms = request.user.classrooms.all()
         class_name = request.user.class_name
@@ -1118,4 +1134,27 @@ class StudentAnalyticsView(APIView):
         return Response({
             'weak_topics': list(wrong_answers),
             'suggested_materials': suggested
+        })
+
+
+class PublicTestQuestionsView(APIView):
+    """GET /api/student/tests/<id>/public-questions/ — Returns questions for public tests."""
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, test_id):
+        test = Test.objects.filter(pk=test_id, is_active=True, access_type='public').first()
+        if not test:
+            return Response({'detail': 'Test topilmadi yoki bu sinf uchun yopilgan.'}, status=404)
+
+        questions = Question.objects.filter(test=test).prefetch_related('matching_pairs')
+        # Return randomized order for guest too
+        q_list = list(questions)
+        import random
+        random.shuffle(q_list)
+
+        return Response({
+            'test_name': test.name,
+            'time_limit': test.time_limit,
+            'chatbot_mode': test.chatbot_mode,
+            'questions': QuestionSerializer(q_list, many=True).data,
         })

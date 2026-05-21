@@ -38,7 +38,9 @@ export default function Navbar() {
     const [editOpen, setEditOpen] = useState(false)
     const dropdownRef = useRef(null)
 
-    const links = user?.role === 'teacher' ? teacherLinks : studentLinks
+    const links = user?.role === 'teacher' ? teacherLinks : (
+        user?.role === 'guest' ? studentLinks.filter(l => l.to !== '/student/history') : studentLinks
+    )
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -144,7 +146,7 @@ export default function Navbar() {
                                             <p className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">{displayName}</p>
                                             <p className="text-xs text-slate-500 dark:text-slate-400">@{user?.username}</p>
                                             <span className="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full mt-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
-                                                {user?.role === 'teacher' ? "👨‍🏫 O'qituvchi" : `🎓 ${user?.class_name || "O'quvchi"}`}
+                                                {user?.role === 'teacher' ? "👨‍🏫 O'qituvchi" : (user?.role === 'guest' ? "👤 Mehmon" : `🎓 ${user?.class_name || "O'quvchi"}`)}
                                             </span>
                                         </div>
                                     </div>
@@ -152,18 +154,7 @@ export default function Navbar() {
                                     {/* XP bar (student) */}
                                     {user?.role === 'student' && (
                                         <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">⭐ XP / Daraja</span>
-                                                <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ background: levelColor }}>
-                                                    Lvl {user?.level || 1}
-                                                </span>
-                                            </div>
-                                            <p className="text-sm font-extrabold text-slate-800 dark:text-slate-200 mb-1.5">{user?.total_xp || 0} XP</p>
-                                            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                                                <div className="h-2 rounded-full transition-all duration-700"
-                                                    style={{ width: `${xpPercent}%`, background: levelColor }} />
-                                            </div>
-                                            <p className="text-[10px] text-slate-400 mt-1">{xpPercent}/100 — keyingi daraja</p>
+                                            {/* ... */}
                                         </div>
                                     )}
 

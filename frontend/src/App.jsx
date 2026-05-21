@@ -33,7 +33,8 @@ function Protected({ role, children }) {
         </div>
     )
     if (!user) return <Navigate to="/login" replace />
-    if (role && user.role !== role) return <Navigate to="/" replace />
+    if (user.role === 'guest' && role === 'teacher') return <Navigate to="/" replace />
+    if (role && user.role !== role && user.role !== 'guest') return <Navigate to="/" replace />
     return children
 }
 
@@ -68,7 +69,7 @@ function AppRoutes() {
             {/* Default redirect */}
             <Route path="/" element={
                 user?.role === 'teacher' ? <Navigate to="/teacher" replace /> :
-                    user?.role === 'student' ? <Navigate to="/student" replace /> :
+                    (user?.role === 'student' || user?.role === 'guest') ? <Navigate to="/student" replace /> :
                         <Navigate to="/login" replace />
             } />
             <Route path="*" element={<Navigate to="/" replace />} />

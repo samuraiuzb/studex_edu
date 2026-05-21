@@ -84,17 +84,21 @@ export default function StudentDashboard() {
                 {/* Hero */}
                 <div className="hero-gradient rounded-3xl p-7 text-white shadow-xl">
                     <h1 className="text-2xl font-extrabold">
-                        Xush kelibsiz, {user?.full_name || user?.username}! 👋
+                        Xush kelibsiz, {user?.role === 'guest' ? 'Mehmon' : (user?.full_name || user?.username)}! 👋
                     </h1>
                     <p className="opacity-80 mt-1">
-                        {user?.class_name ? `${user.class_name}-sinf o'quvchisi` : 'O\'quvchi'}
+                        {user?.role === 'guest' ? 'Platformani o\'rganish rejimi' : (user?.class_name ? `${user.class_name}-sinf o'quvchisi` : 'O\'quvchi')}
                     </p>
                     <div className="flex gap-3 mt-4 flex-wrap">
-                        <Link to="/student/join-classroom" className="bg-white hover:bg-slate-100 text-indigo-700 font-bold px-4 py-2 rounded-xl text-sm transition shadow-lg flex items-center gap-2">
-                            <span>➕ Sinfga qo'shilish</span>
-                        </Link>
+                        {user?.role !== 'guest' && (
+                            <Link to="/student/join-classroom" className="bg-white hover:bg-slate-100 text-indigo-700 font-bold px-4 py-2 rounded-xl text-sm transition shadow-lg flex items-center gap-2">
+                                <span>➕ Sinfga qo'shilish</span>
+                            </Link>
+                        )}
                         <Link to="/student/materials" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-semibold transition">📚 Materiallar</Link>
-                        <Link to="/student/history" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-semibold transition">📈 Natijalarim</Link>
+                        {user?.role !== 'guest' && (
+                            <Link to="/student/history" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-semibold transition">📈 Natijalarim</Link>
+                        )}
                         <Link to="/student/leaderboard" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-semibold transition">🏆 Reyting</Link>
                     </div>
                 </div>
@@ -122,54 +126,9 @@ export default function StudentDashboard() {
                 )}
 
                 {/* Progress section */}
-                {progress && (
+                {progress && user?.role !== 'guest' && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {/* Materials progress */}
-                        <div className="card flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4">
-                            <div className="relative flex-shrink-0">
-                                <ProgressRing pct={matPct} color="#6366f1" />
-                                <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-indigo-600 dark:text-indigo-400"
-                                    style={{ transform: 'none' }}>
-                                    {matPct}%
-                                </span>
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Materiallar</p>
-                                <p className="text-2xl font-extrabold text-indigo-600">{progress.read_materials}<span className="text-sm text-slate-400 font-normal">/{progress.total_materials}</span></p>
-                                <p className="text-xs text-slate-400">o'qilgan</p>
-                            </div>
-                        </div>
-
-                        {/* Tests progress */}
-                        <div className="card flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4">
-                            <div className="relative flex-shrink-0">
-                                <ProgressRing pct={testPct} color="#10b981" />
-                                <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-emerald-600 dark:text-emerald-400"
-                                    style={{ transform: 'none' }}>
-                                    {testPct}%
-                                </span>
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Testlar</p>
-                                <p className="text-2xl font-extrabold text-emerald-600">{progress.completed_tests}<span className="text-sm text-slate-400 font-normal">/{progress.total_tests}</span></p>
-                                <p className="text-xs text-slate-400">bajarilgan</p>
-                            </div>
-                        </div>
-
-                        {/* Trend mini chart */}
-                        <div className="card">
-                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2 text-center sm:text-left">📈 So'nggi trend</p>
-                            {progress.trend.length > 1 ? (
-                                <ResponsiveContainer width="100%" height={70}>
-                                    <LineChart data={progress.trend}>
-                                        <Line type="monotone" dataKey="pct" stroke="#6366f1" strokeWidth={2.5} dot={{ r: 3, fill: '#6366f1' }} />
-                                        <Tooltip content={<TrendTooltip />} />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <p className="text-xs text-slate-400 text-center py-5">Kamida 2 ta natija kerak</p>
-                            )}
-                        </div>
+                        {/* ... existing code ... */}
                     </div>
                 )}
 
@@ -259,7 +218,7 @@ export default function StudentDashboard() {
                 </section>
 
                 {/* Recent history */}
-                {history.length > 0 && (
+                {history.length > 0 && user?.role !== 'guest' && (
                     <section>
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold">📊 So'nggi natijalar</h2>

@@ -45,6 +45,10 @@ export function AuthProvider({ children }) {
         setUser(null)
     }, [])
 
+    const loginAsGuest = useCallback(() => {
+        setUser({ role: 'guest', full_name: 'Mehmon' })
+    }, [])
+
     const updateUser = useCallback(async (payload) => {
         const { data } = await api.patch('/auth/me/', payload)
         setUser(data)
@@ -52,7 +56,7 @@ export function AuthProvider({ children }) {
     }, [])
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, register, updateUser }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, register, updateUser, loginAsGuest }}>
             {children}
         </AuthContext.Provider>
     )

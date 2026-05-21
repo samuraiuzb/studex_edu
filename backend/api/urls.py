@@ -50,6 +50,7 @@ urlpatterns = [
     path('student/materials/', views.StudentMaterialsView.as_view(), name='student-materials'),
     path('student/materials/<int:material_id>/read/', views.StudentMarkMaterialReadView.as_view(), name='student-material-read'),
     path('student/tests/', views.StudentTestListView.as_view(), name='student-tests'),
+    path('student/tests/<int:test_id>/public-questions/', views.PublicTestQuestionsView.as_view(), name='student-public-questions'),
     path('student/tests/<int:test_id>/start/', views.StudentStartAttemptView.as_view(), name='student-start'),
     path('student/attempts/<int:attempt_id>/answer/', views.StudentSubmitAnswerView.as_view(), name='student-answer'),
     path('student/attempts/<int:attempt_id>/finish/', views.StudentFinishAttemptView.as_view(), name='student-finish'),

@@ -4,11 +4,14 @@
 import { useState, useEffect } from 'react'
 import Navbar from '../../components/Navbar'
 import api from '../../api/client'
+import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
 const MEDAL = ['🥇', '🥈', '🥉']
 
 export default function Leaderboard() {
+    const { user } = useAuth()
+    const isGuest = user?.role === 'guest'
     const [board, setBoard] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -19,7 +22,7 @@ export default function Leaderboard() {
             .finally(() => setLoading(false))
     }, [])
 
-    const me = board.find(b => b.is_me)
+    const me = isGuest ? null : board.find(b => b.is_me)
 
     if (loading) return (
         <div className="min-h-screen">
@@ -37,8 +40,12 @@ export default function Leaderboard() {
 
                 {/* Header */}
                 <div className="rounded-3xl p-7 mb-6 text-white shadow-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500">
-                    <h1 className="text-2xl font-extrabold mb-1">🏆 Sinf reytingi</h1>
-                    <p className="text-sm opacity-80">Sinfingizda o'rtacha foiz bo'yicha reyting</p>
+                    <h1 className="text-2xl font-extrabold mb-1">
+                        🏆 {isGuest ? 'Global Reyting' : 'Sinf reytingi'}
+                    </h1>
+                    <p className="text-sm opacity-80">
+                        {isGuest ? 'Platformadagi eng faol o’quvchilar' : 'Sinfingizda o\'rtacha foiz bo\'yicha reyting'}
+                    </p>
                     {me && (
                         <div className="mt-4 bg-white/20 rounded-2xl px-4 py-3 flex items-center justify-between">
                             <span className="font-semibold">Mening joyim</span>
@@ -59,7 +66,7 @@ export default function Leaderboard() {
                     <div className="space-y-2">
                         {board.map((s, i) => (
                             <div
-                                key={s.student_id}
+                                key={s.student_id || s.rank}
                                 className={`flex items-center gap-4 rounded-2xl px-5 py-3.5 shadow-sm transition-all
                                     ${s.is_me
                                         ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/40 dark:to-purple-900/30 border-2 border-indigo-300 dark:border-indigo-600'
@@ -85,22 +92,33 @@ export default function Leaderboard() {
                                     <p className={`font-semibold text-sm truncate ${s.is_me ? 'text-indigo-700 dark:text-indigo-300' : ''}`}>
                                         {s.full_name} {s.is_me && <span className="text-xs font-normal opacity-60">(Sen)</span>}
                                     </p>
-                                    <p className="text-xs text-slate-400">{s.attempts_count} ta urinish</p>
+                                    <p className="text-xs text-slate-400">
+                                        {isGuest ? `Sinf: ${s.class_name}` : `${s.attempts_count} ta urinish`}
+                                    </p>
                                 </div>
 
                                 {/* Score */}
                                 <div className="text-right flex-shrink-0">
-                                    <p className={`text-lg font-extrabold ${s.avg_percentage >= 86 ? 'text-emerald-600' :
-                                        s.avg_percentage >= 56 ? 'text-amber-500' : 'text-red-500'
-                                        }`}>{s.avg_percentage}%</p>
-                                    <div className="w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-1">
-                                        <div
-                                            className={`h-full rounded-full ${s.avg_percentage >= 86 ? 'bg-emerald-500' :
-                                                s.avg_percentage >= 56 ? 'bg-amber-400' : 'bg-red-400'
-                                                }`}
-                                            style={{ width: `${s.avg_percentage}%` }}
-                                        />
-                                    </div>
+                                    {isGuest ? (
+                                        <div className="flex flex-col items-end">
+                                            <p className="text-lg font-extrabold text-indigo-600">{s.total_xp} XP</p>
+                                            <p className="text-xs font-bold text-amber-500">Lv. {s.level}</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <p className={`text-lg font-extrabold ${s.avg_percentage >= 86 ? 'text-emerald-600' :
+                                                s.avg_percentage >= 56 ? 'text-amber-500' : 'text-red-500'
+                                                }`}>{s.avg_percentage}%</p>
+                                            <div className="w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-1">
+                                                <div
+                                                    className={`h-full rounded-full ${s.avg_percentage >= 86 ? 'bg-emerald-500' :
+                                                        s.avg_percentage >= 56 ? 'bg-amber-400' : 'bg-red-400'
+                                                        }`}
+                                                    style={{ width: `${s.avg_percentage}%` }}
+                                                />
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ))}

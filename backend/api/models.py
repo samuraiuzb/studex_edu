@@ -64,6 +64,7 @@ class Material(models.Model):
     file_type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     class_name = models.CharField(max_length=20, blank=True,
                                   help_text="Which class can see this material")
+    access_type = models.CharField(max_length=10, choices=[('public', 'Ochiq'), ('class', 'Faqat sinf')], default='class')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

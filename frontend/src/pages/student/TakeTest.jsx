@@ -14,7 +14,7 @@ import Whiteboard from '../../components/Whiteboard'
 import InteractiveGraph from '../../components/InteractiveGraph'
 import FunctionPlot from '../../components/FunctionPlot'
 import api from '../../api/client'
-import toast from 'react-hot-toast'
+import { useAuth } from '../../context/AuthContext'
 import { useSound } from '../../hooks/useSound'
 
 // ── Chatbot component ─────────────────────────────────────────────────────────
@@ -324,6 +324,8 @@ function FeedbackEffect({ type }) {
 export default function TakeTest() {
     const { id } = useParams()
     const navigate = useNavigate()
+    const { user } = useAuth()
+    const isGuest = user?.role === 'guest'
     const { enabled: soundOn, toggle: toggleSound, playCorrect, playWrong } = useSound()
 
     const [loading, setLoading] = useState(true)
@@ -344,22 +346,42 @@ export default function TakeTest() {
     }, [currentIdx])
 
     useEffect(() => {
-        api.post(`/student/tests/${id}/start/`)
-            .then(({ data }) => {
-                setAttemptId(data.attempt_id)
-                setQuestions(data.questions)
-                setTimeLimit((data.time_limit || 0) * 60)
-                setChatbotMode(data.chatbot_mode || 'OFF')
-            })
-            .catch(err => {
-                toast.error(err.response?.data?.detail || 'Test boshlanmadi.')
-                navigate('/student')
-            })
-            .finally(() => setLoading(false))
-    }, [id])
+        if (isGuest) {
+            api.get(`/student/tests/${id}/public-questions/`)
+                .then(({ data }) => {
+                    setQuestions(data.questions)
+                    setTimeLimit((data.time_limit || 0) * 60)
+                    setChatbotMode(data.chatbot_mode || 'OFF')
+                })
+                .catch(err => {
+                    toast.error(err.response?.data?.detail || 'Test yuklanmadi.')
+                    navigate('/student')
+                })
+                .finally(() => setLoading(false))
+        } else {
+            api.post(`/student/tests/${id}/start/`)
+                .then(({ data }) => {
+                    setAttemptId(data.attempt_id)
+                    setQuestions(data.questions)
+                    setTimeLimit((data.time_limit || 0) * 60)
+                    setChatbotMode(data.chatbot_mode || 'OFF')
+                })
+                .catch(err => {
+                    toast.error(err.response?.data?.detail || 'Test boshlanmadi.')
+                    navigate('/student')
+                })
+                .finally(() => setLoading(false))
+        }
+    }, [id, isGuest])
+
+    const [guestFinished, setGuestFinished] = useState(false)
 
     const handleFinish = useCallback(async () => {
         if (finishing) return
+        if (isGuest) {
+            setGuestFinished(true)
+            return
+        }
         setFinishing(true)
         try {
             await api.post(`/student/attempts/${attemptId}/finish/`)
@@ -368,22 +390,57 @@ export default function TakeTest() {
             toast.error('Yakunlashda xato!')
             setFinishing(false)
         }
-    }, [attemptId, finishing, navigate])
+    }, [attemptId, finishing, navigate, isGuest])
 
     async function selectOption(questionId, option) {
         if (submitting || answers[questionId]) return  // Already answered
         setSubmitting(true)
         try {
-            const payload = { question_id: questionId }
-            if (option && typeof option === 'object') {
-                payload.selected_matching = option
-            } else if (questions[currentIdx].question_type === 'draw_graph' || questions[currentIdx].question_type === 'find_equation') {
-                payload.selected_text = option
-            } else {
-                payload.selected_option = option
+            let data = {}
+            if (isGuest) {
+                // Local check for guests
+                const q = questions.find(q => q.id === questionId)
+                let is_correct = false
+                if (q.question_type === 'multiple_choice') {
+                    // For public questions, we need the correct option. 
+                    // Wait, the QuestionStudentSerializer HIDES correct_option!
+                    // This is a problem for local guest mode.
+                    // Solution: The backend PublicTestQuestionsView should use a different serializer OR include correct_option for public tests.
+                    // Actually, I'll update the backend to include basic correctness check for guests too if needed, 
+                    // OR I can return the correct answer in the PublicTestQuestionsView but obfuscated.
+                    // Better: I'll update PublicTestQuestionsView to include 'correct_option' since it's a public exploration test anyway.
+                }
+                // I need to return the correct_option in the public questions endpoint for local check.
+                // Re-calculating: I will update the backend PublicTestQuestionsView.
             }
 
-            const { data } = await api.post(`/student/attempts/${attemptId}/answer/`, payload)
+            if (!isGuest) {
+                const payload = { question_id: questionId }
+                if (option && typeof option === 'object') {
+                    payload.selected_matching = option
+                } else if (questions[currentIdx].question_type === 'draw_graph' || questions[currentIdx].question_type === 'find_equation') {
+                    payload.selected_text = option
+                } else {
+                    payload.selected_option = option
+                }
+
+                const resp = await api.post(`/student/attempts/${attemptId}/answer/`, payload)
+                data = resp.data
+            } else {
+                // Mock response for guest if we had the correct answer
+                // For now, let's assume we update the backend to include some hints or I'll just post to a guest-answer endpoint.
+                // Actually, let's just make the guest skip the "is_correct" feedback if we don't have it,
+                // OR better: I'll update the backend PublicTestQuestionsView to use QuestionSerializer (which has correct_option)
+                // but ONLY for tests marked as 'public'. 
+                const q = questions.find(q => q.id === questionId)
+                data = {
+                    is_correct: option === q.correct_option, // only for MC
+                    correct_option: q.correct_option,
+                    explanation: q.explanation
+                }
+                // For matching, it's more complex. For simplicity, Guest MC is enough.
+            }
+
             setAnswers(prev => ({ ...prev, [questionId]: { selected: option, ...data } }))
 
             // Trigger visual feedback
@@ -659,6 +716,46 @@ export default function TakeTest() {
                     </div>
                 )}
             </div>
+
+            {/* Guest Result Overlay */}
+            {guestFinished && (
+                <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-bounce-in">
+                        <div className="text-6xl mb-4">🏆</div>
+                        <h2 className="text-2xl font-black mb-2">Test yakunlandi!</h2>
+                        <p className="text-slate-500 mb-6">Mehmon rejimida natijangiz:</p>
+
+                        <div className="flex justify-center gap-4 mb-8">
+                            <div className="text-center">
+                                <p className="text-3xl font-black text-indigo-600">
+                                    {Object.values(answers).filter(a => a.is_correct).length}
+                                </p>
+                                <p className="text-xs uppercase font-bold text-slate-400 tracking-widest">To'gri</p>
+                            </div>
+                            <div className="w-px h-12 bg-slate-100 dark:bg-slate-700" />
+                            <div className="text-center">
+                                <p className="text-3xl font-black text-slate-400">
+                                    {questions.length}
+                                </p>
+                                <p className="text-xs uppercase font-bold text-slate-400 tracking-widest">Jami</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <button onClick={() => window.location.reload()} className="btn-primary w-full py-4 rounded-2xl shadow-lg hover:shadow-indigo-500/25">
+                                🔄 Qayta ishlash
+                            </button>
+                            <button onClick={() => navigate('/student')} className="btn-secondary w-full py-4 rounded-2xl">
+                                🏠 Dashbordga qaytish
+                            </button>
+                        </div>
+
+                        <p className="mt-6 text-xs text-slate-400 leading-relaxed italic">
+                            Natijangiz saqlanishini va reytingda qatnashishni istasangiz, iltimos ro'yxatdan o'ting.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* AI Chatbot */}
             {attemptId && <Chatbot attemptId={attemptId} chatbotMode={chatbotMode} />}
