@@ -154,7 +154,18 @@ export default function Navbar() {
                                     {/* XP bar (student) */}
                                     {user?.role === 'student' && (
                                         <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
-                                            {/* ... */}
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">⭐ XP / Daraja</span>
+                                                <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ background: levelColor }}>
+                                                    Lvl {user?.level || 1}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm font-extrabold text-slate-800 dark:text-slate-200 mb-1.5">{user?.total_xp || 0} XP</p>
+                                            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                                <div className="h-2 rounded-full transition-all duration-700"
+                                                    style={{ width: `${xpPercent}%`, background: levelColor }} />
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 mt-1">{xpPercent}/100 — keyingi daraja</p>
                                         </div>
                                     )}
 

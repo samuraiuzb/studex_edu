@@ -97,7 +97,7 @@ export default function Login() {
 
                 <div className="mt-8 text-center">
                     <button
-                        onClick={() => loginAsGuest()}
+                        onClick={() => { loginAsGuest(); navigate('/student') }}
                         className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm px-6 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-indigo-200 dark:hover:border-indigo-900 group"
                     >
                         <span className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">🔍</span>
