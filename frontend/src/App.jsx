@@ -25,7 +25,8 @@ import MaterialHandout from './pages/student/MaterialHandout'
 import Leaderboard from './pages/student/Leaderboard'
 
 // Protected route wrapper
-function Protected({ role, children }) {
+// guestAllowed=false means this route is strictly student/teacher only (no guests)
+function Protected({ role, guestAllowed = true, children }) {
     const { user, loading } = useAuth()
     if (loading) return (
         <div className="flex items-center justify-center h-screen">
@@ -33,7 +34,11 @@ function Protected({ role, children }) {
         </div>
     )
     if (!user) return <Navigate to="/login" replace />
-    if (user.role === 'guest' && role === 'teacher') return <Navigate to="/" replace />
+    // Teachers can never access guest/student areas and vice-versa
+    if (user.role === 'guest' && role === 'teacher') return <Navigate to="/student" replace />
+    // Guest trying to access a student-only route
+    if (user.role === 'guest' && !guestAllowed) return <Navigate to="/student" replace />
+    // Non-matching role (excluding guest on allowed routes)
     if (role && user.role !== role && user.role !== 'guest') return <Navigate to="/" replace />
     return children
 }
@@ -55,15 +60,15 @@ function AppRoutes() {
             <Route path="/teacher/materials" element={<Protected role="teacher"><TeacherMaterials /></Protected>} />
             <Route path="/teacher/tests/:id/results" element={<Protected role="teacher"><TeacherResults /></Protected>} />
 
-            {/* Student routes */}
+            {/* Student routes — guestAllowed=true (default) = guest can visit */}
             <Route path="/student" element={<Protected role="student"><StudentDashboard /></Protected>} />
-            <Route path="/student/join-classroom" element={<Protected role="student"><StudentJoinClassroom /></Protected>} />
+            <Route path="/student/join-classroom" element={<Protected role="student" guestAllowed={false}><StudentJoinClassroom /></Protected>} />
 
             <Route path="/student/materials" element={<Protected role="student"><StudentMaterials /></Protected>} />
-            <Route path="/student/materials/:id/handout" element={<Protected role="student"><MaterialHandout /></Protected>} />
-            <Route path="/student/test/:id" element={<Protected role="student"><TakeTest /></Protected>} />
-            <Route path="/student/result/:id" element={<Protected role="student"><TestResult /></Protected>} />
-            <Route path="/student/history" element={<Protected role="student"><StudentHistory /></Protected>} />
+            <Route path="/student/materials/:id/handout" element={<Protected role="student" guestAllowed={false}><MaterialHandout /></Protected>} />
+            <Route path="/student/test/:id" element={<Protected role="student" guestAllowed={false}><TakeTest /></Protected>} />
+            <Route path="/student/result/:id" element={<Protected role="student" guestAllowed={false}><TestResult /></Protected>} />
+            <Route path="/student/history" element={<Protected role="student" guestAllowed={false}><StudentHistory /></Protected>} />
             <Route path="/student/leaderboard" element={<Protected role="student"><Leaderboard /></Protected>} />
 
             {/* Default redirect */}
