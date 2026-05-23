@@ -42,8 +42,9 @@ function MaterialViewer({ material, onClose }) {
                     <iframe
                         src={embedUrl}
                         title={material.title}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         allowFullScreen
+                        referrerPolicy="strict-origin-when-cross-origin"
                         className="w-full h-full rounded-lg"
                         style={{ minHeight: '400px' }}
                     />
@@ -302,8 +303,9 @@ export default function TeacherMaterials() {
                                             <iframe
                                                 src={`https://www.youtube.com/embed/${getYouTubeId(form.youtube_url)}`}
                                                 title="preview"
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                                 allowFullScreen
+                                                referrerPolicy="strict-origin-when-cross-origin"
                                                 className="w-full h-full"
                                             />
                                         </div>

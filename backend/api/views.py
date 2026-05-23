@@ -11,7 +11,7 @@ from datetime import datetime
 from django.utils import timezone
 from django.db.models import Count, Avg, Q, Sum
 from django.http import HttpResponse
-from rest_framework import status, generics, permissions
+from rest_framework import status, generics, permissions, serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -517,8 +517,7 @@ class StudentMaterialsView(generics.ListAPIView):
         user = self.request.user
         if user.is_authenticated:
             return Material.objects.filter(
-                Q(class_name=user.class_name) | 
-                Q(class_name='') |
+                Q(class_name=user.class_name, class_name__isnull=False) |
                 Q(classroom__in=user.classrooms.all()) |
                 Q(access_type='public')
             ).distinct().order_by('-created_at')

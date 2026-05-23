@@ -176,8 +176,9 @@ function ViewerModal({ material, onClose, onConfirm, confirming }) {
                     <iframe
                         src={embedUrl}
                         title={material.title}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         allowFullScreen
+                        referrerPolicy="strict-origin-when-cross-origin"
                         className="w-full rounded-xl max-h-[62vh]"
                         style={{ height: '62vh' }}
                     />
