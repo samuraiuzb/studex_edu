@@ -526,21 +526,29 @@ class StudentMaterialsView(generics.ListAPIView):
 
 class StudentMarkMaterialReadView(APIView):
     """POST /api/student/materials/<material_id>/read/ — Mark material as read."""
-    permission_classes = [IsStudent]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request, material_id):
         material = Material.objects.filter(pk=material_id).first()
         if not material:
             return Response({'detail': 'Material topilmadi.'}, status=404)
-        # get_or_create prevents duplicates
-        log, created = MaterialReadLog.objects.get_or_create(
-            student=request.user,
-            material=material
-        )
+        # For authenticated students, save the log. For guests, just return success.
+        if request.user.is_authenticated:
+            # get_or_create prevents duplicates
+            log, created = MaterialReadLog.objects.get_or_create(
+                student=request.user,
+                material=material
+            )
+            read_at = log.read_at
+            already_read = not created
+        else:
+            read_at = timezone.now()
+            already_read = False
+
         return Response({
             'material_id': material.id,
-            'read_at': log.read_at,
-            'already_read': not created,
+            'read_at': read_at,
+            'already_read': already_read,
             # return linked test id if any, so frontend can navigate
             'linked_test_id': material.tests.filter(is_active=True).values_list('id', flat=True).first()
         })

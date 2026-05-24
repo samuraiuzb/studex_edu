@@ -16,6 +16,7 @@ import FunctionPlot from '../../components/FunctionPlot'
 import api from '../../api/client'
 import { useAuth } from '../../context/AuthContext'
 import { useSound } from '../../hooks/useSound'
+import toast from 'react-hot-toast'
 
 // ── Chatbot component ─────────────────────────────────────────────────────────
 function Chatbot({ attemptId, chatbotMode }) {
@@ -397,23 +398,6 @@ export default function TakeTest() {
         setSubmitting(true)
         try {
             let data = {}
-            if (isGuest) {
-                // Local check for guests
-                const q = questions.find(q => q.id === questionId)
-                let is_correct = false
-                if (q.question_type === 'multiple_choice') {
-                    // For public questions, we need the correct option. 
-                    // Wait, the QuestionStudentSerializer HIDES correct_option!
-                    // This is a problem for local guest mode.
-                    // Solution: The backend PublicTestQuestionsView should use a different serializer OR include correct_option for public tests.
-                    // Actually, I'll update the backend to include basic correctness check for guests too if needed, 
-                    // OR I can return the correct answer in the PublicTestQuestionsView but obfuscated.
-                    // Better: I'll update PublicTestQuestionsView to include 'correct_option' since it's a public exploration test anyway.
-                }
-                // I need to return the correct_option in the public questions endpoint for local check.
-                // Re-calculating: I will update the backend PublicTestQuestionsView.
-            }
-
             if (!isGuest) {
                 const payload = { question_id: questionId }
                 if (option && typeof option === 'object') {
@@ -427,11 +411,7 @@ export default function TakeTest() {
                 const resp = await api.post(`/student/attempts/${attemptId}/answer/`, payload)
                 data = resp.data
             } else {
-                // Mock response for guest if we had the correct answer
-                // For now, let's assume we update the backend to include some hints or I'll just post to a guest-answer endpoint.
-                // Actually, let's just make the guest skip the "is_correct" feedback if we don't have it,
-                // OR better: I'll update the backend PublicTestQuestionsView to use QuestionSerializer (which has correct_option)
-                // but ONLY for tests marked as 'public'. 
+                // PublicTestQuestionsView uses QuestionSerializer which has correct_option
                 const q = questions.find(q => q.id === questionId)
                 data = {
                     is_correct: option === q.correct_option, // only for MC

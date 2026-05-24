@@ -65,8 +65,8 @@ function AppRoutes() {
             <Route path="/student/join-classroom" element={<Protected role="student" guestAllowed={false}><StudentJoinClassroom /></Protected>} />
 
             <Route path="/student/materials" element={<Protected role="student"><StudentMaterials /></Protected>} />
-            <Route path="/student/materials/:id/handout" element={<Protected role="student" guestAllowed={false}><MaterialHandout /></Protected>} />
-            <Route path="/student/test/:id" element={<Protected role="student" guestAllowed={false}><TakeTest /></Protected>} />
+            <Route path="/student/materials/:id/handout" element={<Protected role="student" guestAllowed={true}><MaterialHandout /></Protected>} />
+            <Route path="/student/test/:id" element={<Protected role="student" guestAllowed={true}><TakeTest /></Protected>} />
             <Route path="/student/result/:id" element={<Protected role="student" guestAllowed={false}><TestResult /></Protected>} />
             <Route path="/student/history" element={<Protected role="student" guestAllowed={false}><StudentHistory /></Protected>} />
             <Route path="/student/leaderboard" element={<Protected role="student"><Leaderboard /></Protected>} />
