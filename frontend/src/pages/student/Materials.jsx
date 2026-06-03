@@ -93,22 +93,28 @@ function TxtViewer({ url, containerRef, onReady }) {
     )
 }
 
-/* ── PDF / Word viewer in scrollable object wrapper ── */
+/* ── PDF / Word / PPT viewer ── */
 function DocViewer({ url, containerRef }) {
-    // Render `<object>` at 300vh height inside a 62vh scrollable wrapper.
-    // The outer div scrolls → we can detect scroll-to-bottom on the div.
+    // google docs viewer needs absolute url
+    const absoluteUrl = url.startsWith('http') ? url : window.location.origin + url
+    const isPDF = isPdfFile(url)
+
+    // For Word/PPT we MUST use Google Docs Viewer because browser cannot show them natively.
+    // For PDF, we can use <iframe> directly (native) or Google Docs Viewer (as fallback).
+    const viewerUrl = isPDF ? url : `https://docs.google.com/viewer?url=${encodeURIComponent(absoluteUrl)}&embedded=true`
+
     return (
         <div
             ref={containerRef}
-            className="overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-600"
+            className="overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900"
             style={{ height: '62vh' }}
         >
-            <object
-                data={url}
-                type="application/pdf"
-                style={{ width: '100%', height: '300vh', display: 'block' }}
+            <iframe
+                src={viewerUrl}
+                title="Document Viewer"
+                style={{ width: '100%', height: '300vh', display: 'block', border: 'none' }}
+                loading="lazy"
             >
-                {/* Fallback for Word files or browsers without PDF plugin */}
                 <div className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2">
                     <p className="text-3xl">📄</p>
                     <p className="text-sm">Fayl inline ko'rsatilmadi.</p>
@@ -116,7 +122,7 @@ function DocViewer({ url, containerRef }) {
                         Yangi tabda ochish
                     </a>
                 </div>
-            </object>
+            </iframe>
         </div>
     )
 }
