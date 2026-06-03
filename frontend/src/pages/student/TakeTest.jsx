@@ -19,7 +19,7 @@ import { useSound } from '../../hooks/useSound'
 import toast from 'react-hot-toast'
 
 // ── Chatbot component ─────────────────────────────────────────────────────────
-function Chatbot({ attemptId, chatbotMode }) {
+function Chatbot({ attemptId, chatbotMode, currentQuestion, currentQuestionIndex }) {
     const [messages, setMessages] = useState([])
     const [input, setInput] = useState('')
     const [sending, setSending] = useState(false)
@@ -38,7 +38,11 @@ function Chatbot({ attemptId, chatbotMode }) {
         setMessages(m => [...m, { role: 'user', content: msg }])
         setSending(true)
         try {
-            const { data } = await api.post(`/chat/${attemptId}/`, { message: msg })
+            const { data } = await api.post(`/chat/${attemptId}/`, {
+                message: msg,
+                current_question_id: currentQuestion?.id,
+                current_question_index: currentQuestionIndex
+            })
             setMessages(m => [...m, { role: 'assistant', content: data.reply }])
         } catch (err) {
             setMessages(m => [...m, { role: 'assistant', content: err.response?.data?.detail || 'Xato yuz berdi.' }])
@@ -738,7 +742,14 @@ export default function TakeTest() {
             )}
 
             {/* AI Chatbot */}
-            {attemptId && <Chatbot attemptId={attemptId} chatbotMode={chatbotMode} />}
+            {attemptId && (
+                <Chatbot
+                    attemptId={attemptId}
+                    chatbotMode={chatbotMode}
+                    currentQuestion={question}
+                    currentQuestionIndex={currentIdx + 1}
+                />
+            )}
 
             {/* Whiteboard Modal */}
             {showWhiteboard && <Whiteboard onClose={() => setShowWhiteboard(false)} />}

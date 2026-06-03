@@ -985,6 +985,32 @@ class ChatView(APIView):
         # Get or create chat session
         session, _ = ChatSession.objects.get_or_create(attempt=attempt)
 
+        # Extract context
+        current_q_id = request.data.get('current_question_id')
+        context_q = None
+
+        # Check if user mentions a specific number (e.g. "10-savol")
+        import re
+        match = re.search(r'(\d+)-savol', user_message.lower())
+        if match:
+            idx = int(match.group(1)) - 1
+            if 0 <= idx < len(attempt.question_order):
+                q_id = attempt.question_order[idx]
+                context_q = Question.objects.filter(id=q_id).first()
+
+        if not context_q and current_q_id:
+            context_q = Question.objects.filter(id=current_q_id).first()
+
+        q_context_text = ""
+        if context_q:
+            q_context_text = (
+                f"\n\nKONTEKST (O'quvchi so'rayotgan savol):\n"
+                f"Savol: {context_q.text}\n"
+                f"Variantlar: A: {context_q.option_a}, B: {context_q.option_b}, C: {context_q.option_c}, D: {context_q.option_d}\n"
+                f"To'g'ri javob: {context_q.correct_option}\n"
+                f"Tushuntirish: {context_q.explanation}\n"
+            )
+
         # Save user message
         ChatMessage.objects.create(session=session, role='user', content=user_message)
 
@@ -1011,10 +1037,11 @@ class ChatView(APIView):
             role_label = "O'quvchi" if msg.role == 'user' else "Yordamchi"
             history_text += f"{role_label}: {msg.content}\n"
 
-        # Full prompt: system + history + current message
+        # Full prompt: context + system + history + current message
         full_prompt = (
-            f"{system_prompt}\n\n"
-            f"{history_text}"
+            f"{system_prompt}"
+            f"{q_context_text}\n\n"
+            f"TARIX:\n{history_text}"
             f"O'quvchi: {user_message}\n"
             f"Yordamchi:"
         )
