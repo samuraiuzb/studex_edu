@@ -82,7 +82,7 @@ function Chatbot({ attemptId, chatbotMode }) {
                                     ? 'bg-blue-600 text-white rounded-br-sm'
                                     : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-sm'
                                     }`}>
-                                    {m.content}
+                                    <MathText text={m.content} />
                                 </div>
                             </div>
                         ))}
