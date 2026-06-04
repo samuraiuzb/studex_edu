@@ -264,9 +264,23 @@ class Answer(models.Model):
                         break
                 self.is_correct = correct and (len(self.selected_matching) == len(pairs))
         elif self.question.question_type in ['find_equation', 'draw_graph']:
-            ans_str = str(self.selected_text or '').replace(' ', '')
-            corr_str = str(self.question.correct_answer_text or '').replace(' ', '')
-            self.is_correct = (ans_str == corr_str)
+            ans_str = str(self.selected_text or '').strip()
+            corr_str = str(self.question.correct_answer_text or '').strip()
+            if ans_str.replace(' ', '') == corr_str.replace(' ', ''):
+                self.is_correct = True
+            else:
+                try:
+                    import sympy
+                    from sympy.abc import x
+                    expr_ans = sympy.sympify(ans_str)
+                    expr_cor = sympy.sympify(corr_str)
+                    test_values = [-3, -1, 0, 1, 2, 3, 0.5, -0.5]
+                    self.is_correct = all(
+                        abs(float(expr_ans.subs(x, v)) - float(expr_cor.subs(x, v))) < 1e-6
+                        for v in test_values
+                    )
+                except Exception:
+                    self.is_correct = False
         else:
             self.is_correct = (self.selected_option == self.question.correct_option)
         super().save(*args, **kwargs)
