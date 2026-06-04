@@ -321,6 +321,30 @@ export default function TeacherTestDetail() {
 
                             {qForm.question_type === 'find_equation' && (
                                 <div className="p-4 border rounded-xl space-y-4">
+                                    {/* Templates */}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Shablonlar (Tanlash orqali tez kiritish):</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {[
+                                                { l: "Chiziqli", e: "2*x + 1", a: "2x+1" },
+                                                { l: "Kvadrat", e: "x^2 - 4", a: "x^2-4" },
+                                                { l: "Kvadrat (To'liq)", e: "x^2 - 2*x + 1", a: "x^2-2x+1" },
+                                                { l: "Kubik", e: "x^3", a: "x^3" },
+                                                { l: "Modul", e: "abs(x-2)", a: "abs(x-2)" },
+                                                { l: "Teskari", e: "1/x", a: "1/x" },
+                                            ].map((t, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    type="button"
+                                                    onClick={() => setQForm(f => ({ ...f, option_a: t.e, correct_answer_text: t.a }))}
+                                                    className="px-3 py-1.5 text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-slate-600 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 transition"
+                                                >
+                                                    + {t.l}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
                                     <div>
                                         <label className="input-label">Tizim chizib berishi kerak bo'lgan funksiya (masalan: <b>x^2 - 4</b>)</label>
                                         <input
@@ -348,6 +372,20 @@ export default function TeacherTestDetail() {
                                             placeholder="Masalan: x^2 - 4"
                                             required
                                         />
+                                    </div>
+
+                                    {/* Math Helper */}
+                                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
+                                        <p className="text-xs font-bold text-blue-700 dark:text-blue-300 mb-2">💡 Matematik yordamchi:</p>
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] text-blue-600 dark:text-blue-400">
+                                            <span>Kvadrat: <b>x^2</b></span>
+                                            <span>Kub: <b>x^3</b></span>
+                                            <span>Ildiz: <b>sqrt(x)</b></span>
+                                            <span>Modul: <b>abs(x)</b></span>
+                                            <span>Ko'paytirish: <b>2*x</b></span>
+                                            <span>Bo'lish: <b>1/x</b></span>
+                                        </div>
+                                        <p className="text-[10px] mt-2 italic opacity-70">Eslatma: O'quvchi javobida bo'shliqlar (probel) hisobga olinmaydi.</p>
                                     </div>
                                 </div>
                             )}
