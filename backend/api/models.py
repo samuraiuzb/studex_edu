@@ -303,13 +303,21 @@ class Answer(models.Model):
                     try:
                         import sympy
                         from sympy.abc import x
-                        expr_ans = sympy.sympify(cleaned_ans)
-                        expr_cor = sympy.sympify(cleaned_cor)
-                        test_values = [-3, -1, 0, 1, 2, 3, 0.5, -0.5]
-                        self.is_correct = all(
-                            abs(float(expr_ans.subs(x, v)) - float(expr_cor.subs(x, v))) < 1e-6
-                            for v in test_values
-                        )
+                        from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor
+                        
+                        transformations = standard_transformations + (implicit_multiplication_application, convert_xor)
+                        expr_ans = parse_expr(cleaned_ans, transformations=transformations)
+                        expr_cor = parse_expr(cleaned_cor, transformations=transformations)
+                        
+                        diff = sympy.simplify(expr_ans - expr_cor)
+                        if diff == 0:
+                            self.is_correct = True
+                        else:
+                            test_values = [-3, -1, 0, 1, 2, 3, 0.5, -0.5]
+                            self.is_correct = all(
+                                abs(float(expr_ans.subs(x, v)) - float(expr_cor.subs(x, v))) < 1e-6
+                                for v in test_values
+                            )
                     except Exception:
                         self.is_correct = False
         else:
