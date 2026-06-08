@@ -1359,6 +1359,28 @@ class StudentProfileStatsView(APIView):
         normal_days = sum(1 for d in weekly_stats if 0 < d['count'] < 5)
         best_days = sum(1 for d in weekly_stats if d['count'] >= 5)
 
+        # 3.1 Monthly activity (current month)
+        import calendar
+        first_weekday, num_days = calendar.monthrange(now.year, now.month)
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        monthly_stats = []
+        for i in range(num_days):
+            day_start = start_of_month + timezone.timedelta(days=i)
+            day_end = day_start + timezone.timedelta(days=1)
+            count = Answer.objects.filter(
+                attempt__student=student,
+                answered_at__range=(day_start, day_end)
+            ).count()
+            monthly_stats.append({
+                'date': day_start.day,
+                'count': count
+            })
+            
+        monthly_incomplete_days = sum(1 for d in monthly_stats if d['count'] == 0)
+        monthly_normal_days = sum(1 for d in monthly_stats if 0 < d['count'] < 5)
+        monthly_best_days = sum(1 for d in monthly_stats if d['count'] >= 5)
+
         # 4. Activity trend (last 7 days including today)
         trend_stats = []
         for i in range(6, -1, -1):
@@ -1434,6 +1456,11 @@ class StudentProfileStatsView(APIView):
             'incomplete_days': incomplete_days,
             'normal_days': normal_days,
             'best_days': best_days,
+            'monthly_stats': monthly_stats,
+            'first_day_weekday': first_weekday,
+            'monthly_incomplete_days': monthly_incomplete_days,
+            'monthly_normal_days': monthly_normal_days,
+            'monthly_best_days': monthly_best_days,
             'trend_stats': trend_stats,
             'difficulty_stats': difficulty_stats,
             'achievements': achievements,

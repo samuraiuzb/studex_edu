@@ -184,35 +184,66 @@ export default function StudentProfile() {
                         </div>
 
                         {/* Calendar row */}
-                        <div className="grid grid-cols-7 gap-1 sm:gap-2 my-4">
-                            {stats.weekly_stats.map((day, idx) => (
-                                <div key={idx} className={`flex flex-col items-center py-2.5 rounded-2xl border transition ${
-                                    day.count >= 5 ? 'bg-indigo-50/70 border-indigo-200 dark:bg-indigo-950/20 dark:border-indigo-900/40' :
-                                    day.count > 0 ? 'bg-emerald-50/50 border-emerald-100 dark:bg-emerald-950/10 dark:border-emerald-900/30' :
-                                    'bg-slate-50/40 border-slate-100 dark:bg-slate-800/40 dark:border-slate-700/50'
-                                }`}>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">{day.day_name}</span>
-                                    <span className="text-xs font-black text-slate-700 dark:text-slate-300 mt-0.5">{day.date}</span>
-                                    <span className={`text-sm mt-1.5 ${day.count > 0 ? 'text-amber-500 animate-pulse' : 'text-slate-300 dark:text-slate-700'}`}>⚡</span>
-                                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">{day.count}</span>
+                        {isWeekly ? (
+                            <div className="grid grid-cols-7 gap-1 sm:gap-2 my-4 animate-fade-in">
+                                {stats.weekly_stats.map((day, idx) => (
+                                    <div key={idx} className={`flex flex-col items-center py-2.5 rounded-2xl border transition ${
+                                        day.count >= 5 ? 'bg-indigo-50/70 border-indigo-200 dark:bg-indigo-950/20 dark:border-indigo-900/40' :
+                                        day.count > 0 ? 'bg-emerald-50/50 border-emerald-100 dark:bg-emerald-950/10 dark:border-emerald-900/30' :
+                                        'bg-slate-50/40 border-slate-100 dark:bg-slate-800/40 dark:border-slate-700/50'
+                                    }`}>
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">{day.day_name}</span>
+                                        <span className="text-xs font-black text-slate-700 dark:text-slate-300 mt-0.5">{day.date}</span>
+                                        <span className={`text-sm mt-1.5 ${day.count > 0 ? 'text-amber-500 animate-pulse' : 'text-slate-300 dark:text-slate-700'}`}>⚡</span>
+                                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">{day.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="my-4 animate-fade-in space-y-2">
+                                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                    <div>Du</div>
+                                    <div>Se</div>
+                                    <div>Cho</div>
+                                    <div>Pa</div>
+                                    <div>Ju</div>
+                                    <div>Sha</div>
+                                    <div>Ya</div>
                                 </div>
-                            ))}
-                        </div>
+                                <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                                    {/* Empty cells for padding */}
+                                    {Array.from({ length: stats.first_day_weekday || 0 }).map((_, idx) => (
+                                        <div key={`empty-${idx}`} className="aspect-square opacity-0" />
+                                    ))}
+                                    {/* Month days */}
+                                    {(stats.monthly_stats || []).map((day, idx) => (
+                                        <div key={idx} className={`aspect-square flex flex-col items-center justify-center rounded-xl border text-xs font-black relative group transition cursor-pointer ${
+                                            day.count >= 5 ? 'bg-indigo-50/70 border-indigo-200 text-indigo-700 dark:bg-indigo-950/20 dark:border-indigo-900/40 dark:text-indigo-300' :
+                                            day.count > 0 ? 'bg-emerald-50/50 border-emerald-100 text-emerald-700 dark:bg-emerald-950/10 dark:border-emerald-900/30 dark:text-emerald-300' :
+                                            'bg-slate-50/40 border-slate-100 text-slate-400 dark:bg-slate-800/40 dark:border-slate-700/50 dark:text-slate-500'
+                                        }`} title={`${day.date}-kun: ${day.count} ta savol`}>
+                                            <span>{day.date}</span>
+                                            {day.count > 0 && <span className="absolute bottom-1 w-1 h-1 rounded-full bg-amber-500" />}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Calendar stats breakdown */}
                         <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-700/60 pt-4 flex-wrap gap-3">
                             <div className="flex gap-4 text-xs font-bold">
                                 <div className="flex items-center gap-1.5">
                                     <span className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700" />
-                                    <span className="text-slate-500">TUGATILMAGAN: <strong className="text-slate-700 dark:text-slate-300">{stats.incomplete_days} kun</strong></span>
+                                    <span className="text-slate-500">TUGATILMAGAN: <strong className="text-slate-700 dark:text-slate-300">{isWeekly ? stats.incomplete_days : (stats.monthly_incomplete_days ?? 0)} kun</strong></span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                                    <span className="text-slate-500">NORMAL: <strong className="text-slate-700 dark:text-slate-300">{stats.normal_days} kun</strong></span>
+                                    <span className="text-slate-500">NORMAL: <strong className="text-slate-700 dark:text-slate-300">{isWeekly ? stats.normal_days : (stats.monthly_normal_days ?? 0)} kun</strong></span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-                                    <span className="text-slate-500">ENG YAXSHI: <strong className="text-slate-700 dark:text-slate-300">{stats.best_days} kun</strong></span>
+                                    <span className="text-slate-500">ENG YAXSHI: <strong className="text-slate-700 dark:text-slate-300">{isWeekly ? stats.best_days : (stats.monthly_best_days ?? 0)} kun</strong></span>
                                 </div>
                             </div>
                             <button 
