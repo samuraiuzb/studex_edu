@@ -25,6 +25,10 @@ export default function StudentProfile() {
     const [showBadgesModal, setShowBadgesModal] = useState(false)
     const [isWeekly, setIsWeekly] = useState(true) // weekly/monthly toggle
 
+    const [analytics, setAnalytics] = useState(null)
+    const [showDiagnosticsModal, setShowDiagnosticsModal] = useState(false)
+    const [fetchingDiagnostics, setFetchingDiagnostics] = useState(false)
+
     useEffect(() => {
         if (user?.role === 'guest') {
             toast.error("Mehmonlar uchun profil sahifasi mavjud emas")
@@ -37,6 +41,20 @@ export default function StudentProfile() {
             .catch(() => toast.error("Ma'lumotlarni yuklab bo'lmadi"))
             .finally(() => setLoading(false))
     }, [user, navigate])
+
+    async function handleDiagnosticsClick() {
+        setShowDiagnosticsModal(true)
+        if (analytics) return // already fetched
+        setFetchingDiagnostics(true)
+        try {
+            const { data } = await api.get('/student/analytics/')
+            setAnalytics(data)
+        } catch {
+            toast.error("Diagnostikani yuklab bo'lmadi")
+        } finally {
+            setFetchingDiagnostics(false)
+        }
+    }
 
     if (loading) return (
         <div className="min-h-screen">
@@ -107,7 +125,7 @@ export default function StudentProfile() {
                             </p>
                         </div>
                         <button 
-                            onClick={() => navigate('/student/leaderboard')}
+                            onClick={handleDiagnosticsClick}
                             className="w-full py-3 bg-white dark:bg-emerald-900/50 hover:bg-emerald-50 text-emerald-700 dark:text-emerald-300 font-bold rounded-2xl shadow-sm text-xs transition-all duration-200 active:scale-95"
                         >
                             Diagnostika
@@ -276,17 +294,17 @@ export default function StudentProfile() {
                             </div>
                         </div>
 
-                        {/* Category Practice Donut Chart card */}
+                        {/* Difficulty analysis card */}
                         <div className="md:col-span-4 bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-700/80 flex flex-col justify-between min-h-[260px]">
-                            <h3 className="text-sm font-black text-slate-900 dark:text-white">Kategoriya bo'yicha shug'ullanish</h3>
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white">Savollar qiyinchilik darajasi</h3>
                             
-                            {stats.category_stats.length > 0 ? (
+                            {stats.difficulty_stats && stats.difficulty_stats.length > 0 ? (
                                 <div className="flex items-center gap-4 mt-2">
                                     <div className="w-28 h-28 flex-shrink-0">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <Pie
-                                                    data={stats.category_stats}
+                                                    data={stats.difficulty_stats}
                                                     cx="50%"
                                                     cy="50%"
                                                     innerRadius={30}
@@ -294,7 +312,7 @@ export default function StudentProfile() {
                                                     paddingAngle={3}
                                                     dataKey="value"
                                                 >
-                                                    {stats.category_stats.map((entry, index) => (
+                                                    {stats.difficulty_stats.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                     ))}
                                                 </Pie>
@@ -303,7 +321,7 @@ export default function StudentProfile() {
                                         </ResponsiveContainer>
                                     </div>
                                     <div className="space-y-1 overflow-hidden flex-1">
-                                        {stats.category_stats.map((entry, index) => (
+                                        {stats.difficulty_stats.map((entry, index) => (
                                             <div key={index} className="flex items-center gap-2 text-[10px] font-bold">
                                                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                                                 <span className="truncate text-slate-500 dark:text-slate-400 flex-1">{entry.name}</span>
@@ -314,8 +332,8 @@ export default function StudentProfile() {
                                 </div>
                             ) : (
                                 <div className="flex-1 flex flex-col items-center justify-center text-slate-400 py-6">
-                                    <span className="text-2xl mb-1">🥧</span>
-                                    <p className="text-xs text-center">Hozircha fan toifalari bo'yicha ma'lumot yo'q</p>
+                                    <span className="text-2xl mb-1">🎯</span>
+                                    <p className="text-xs text-center">Hozircha ma'lumotlar yo'q. Mashq qilishni boshlang!</p>
                                 </div>
                             )}
                         </div>
@@ -366,6 +384,89 @@ export default function StudentProfile() {
 
                         <button 
                             onClick={() => setShowBadgesModal(false)}
+                            className="w-full mt-5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl text-xs transition shadow-lg active:scale-95"
+                        >
+                            Yopish
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── DIAGNOSTICS DETAILED MODAL ── */}
+            {showDiagnosticsModal && (
+                <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl animate-bounce-in border border-slate-100 dark:border-slate-700/80">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                🧠 Real-vaqt diagnostika tahlili
+                            </h2>
+                            <button 
+                                onClick={() => setShowDiagnosticsModal(false)}
+                                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-500 dark:text-slate-400 font-bold flex items-center justify-center text-sm"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {fetchingDiagnostics ? (
+                            <div className="flex flex-col items-center justify-center py-12 gap-3">
+                                <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                <p className="text-xs text-slate-400">Diagnostika yuklanmoqda...</p>
+                            </div>
+                        ) : analytics ? (
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
+                                
+                                {/* Weak topics list */}
+                                <div>
+                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Zaif mavzularingiz</h3>
+                                    {analytics.weak_topics && analytics.weak_topics.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {analytics.weak_topics.map((t, idx) => (
+                                                <span key={idx} className="bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 font-semibold px-3 py-1.5 rounded-xl text-xs border border-rose-100 dark:border-rose-900/40">
+                                                    {t.question__topic} ({t.wrong_count} ta xato)
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">✨ Ajoyib! Sizda hozircha zaif mavzular aniqlanmadi.</p>
+                                    )}
+                                </div>
+
+                                {/* Suggested materials */}
+                                <div className="pt-2">
+                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tavsiya etiladigan materiallar</h3>
+                                    {analytics.suggested_materials && analytics.suggested_materials.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {analytics.suggested_materials.map(m => (
+                                                <a 
+                                                    href={m.file} 
+                                                    target="_blank" 
+                                                    rel="noreferrer" 
+                                                    key={m.id} 
+                                                    className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-200/50 dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-indigo-500 transition"
+                                                >
+                                                    <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0 text-lg">
+                                                        {m.file_type === 'pdf' ? '📕' : m.file_type === 'youtube' ? '▶️' : '📄'}
+                                                    </div>
+                                                    <div className="overflow-hidden flex-1">
+                                                        <h4 className="font-bold text-xs truncate text-slate-800 dark:text-slate-100">{m.title}</h4>
+                                                        <p className="text-[10px] text-slate-400 mt-0.5 truncate">{m.description || "Tavsiyaviy o'quv materiali"}</p>
+                                                    </div>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-slate-400">Tavsiya etilgan materiallar mavjud emas.</p>
+                                    )}
+                                </div>
+
+                            </div>
+                        ) : (
+                            <p className="text-xs text-slate-400 text-center py-6">Ma'lumot topilmadi.</p>
+                        )}
+
+                        <button 
+                            onClick={() => setShowDiagnosticsModal(false)}
                             className="w-full mt-5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl text-xs transition shadow-lg active:scale-95"
                         >
                             Yopish

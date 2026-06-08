@@ -1379,17 +1379,18 @@ class StudentProfileStatsView(APIView):
                 'savollar': count
             })
 
-        # 5. Practice by category (donut chart)
-        categories = Answer.objects.filter(
+        # 5. Practice by difficulty (donut chart)
+        difficulties = Answer.objects.filter(
             attempt__student=student,
-            question__topic__isnull=False
-        ).exclude(question__topic="").values('question__topic').annotate(count=Count('id')).order_by('-count')[:5]
+            question__difficulty__isnull=False
+        ).exclude(question__difficulty="").values('question__difficulty').annotate(count=Count('id')).order_by('-count')
         
-        category_stats = []
-        for c in categories:
-            category_stats.append({
-                'name': c['question__topic'],
-                'value': c['count']
+        difficulty_map = {'easy': 'Oson', 'medium': 'O\'rtacha', 'hard': 'Qiyin'}
+        difficulty_stats = []
+        for d in difficulties:
+            difficulty_stats.append({
+                'name': difficulty_map.get(d['question__difficulty'], d['question__difficulty']),
+                'value': d['count']
             })
 
         # 6. Achievements list
@@ -1434,7 +1435,7 @@ class StudentProfileStatsView(APIView):
             'normal_days': normal_days,
             'best_days': best_days,
             'trend_stats': trend_stats,
-            'category_stats': category_stats,
+            'difficulty_stats': difficulty_stats,
             'achievements': achievements,
             'unlocked_count': unlocked_count,
             'daily_average': daily_average
