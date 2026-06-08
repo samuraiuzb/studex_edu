@@ -197,6 +197,7 @@ class Attempt(models.Model):
     is_completed = models.BooleanField(default=False)
     question_order = models.JSONField(default=list,
                                       help_text="Randomized question IDs for this attempt")
+    ai_feedback = models.TextField(blank=True, null=True, help_text="AI feedback on student performance")
 
     @property
     def percentage(self):
@@ -266,21 +267,51 @@ class Answer(models.Model):
         elif self.question.question_type in ['find_equation', 'draw_graph']:
             ans_str = str(self.selected_text or '').strip()
             corr_str = str(self.question.correct_answer_text or '').strip()
-            if ans_str.replace(' ', '') == corr_str.replace(' ', ''):
-                self.is_correct = True
-            else:
+            
+            if self.question.question_type == 'draw_graph':
                 try:
-                    import sympy
-                    from sympy.abc import x
-                    expr_ans = sympy.sympify(ans_str)
-                    expr_cor = sympy.sympify(corr_str)
-                    test_values = [-3, -1, 0, 1, 2, 3, 0.5, -0.5]
-                    self.is_correct = all(
-                        abs(float(expr_ans.subs(x, v)) - float(expr_cor.subs(x, v))) < 1e-6
-                        for v in test_values
-                    )
+                    # Parse "m=1.00,c=2.00"
+                    def parse_mc(s):
+                        s_clean = s.replace(' ', '')
+                        parts = s_clean.split(',')
+                        m_val = float(parts[0].split('=')[1])
+                        c_val = float(parts[1].split('=')[1])
+                        return m_val, c_val
+                    
+                    ans_m, ans_c = parse_mc(ans_str)
+                    cor_m, cor_c = parse_mc(corr_str)
+                    
+                    # Tolerance check
+                    self.is_correct = abs(ans_m - cor_m) < 0.15 and abs(ans_c - cor_c) < 0.15
                 except Exception:
-                    self.is_correct = False
+                    self.is_correct = ans_str.replace(' ', '') == corr_str.replace(' ', '')
+            else: # find_equation
+                # Clean equation prefixes
+                def clean_eq(s):
+                    s = s.replace(' ', '')
+                    for prefix in ['y=', 'f(x)=', 'g(x)=', 'y-']:
+                        if s.lower().startswith(prefix):
+                            s = s[len(prefix):]
+                    return s
+                
+                cleaned_ans = clean_eq(ans_str)
+                cleaned_cor = clean_eq(corr_str)
+                
+                if cleaned_ans == cleaned_cor:
+                    self.is_correct = True
+                else:
+                    try:
+                        import sympy
+                        from sympy.abc import x
+                        expr_ans = sympy.sympify(cleaned_ans)
+                        expr_cor = sympy.sympify(cleaned_cor)
+                        test_values = [-3, -1, 0, 1, 2, 3, 0.5, -0.5]
+                        self.is_correct = all(
+                            abs(float(expr_ans.subs(x, v)) - float(expr_cor.subs(x, v))) < 1e-6
+                            for v in test_values
+                        )
+                    except Exception:
+                        self.is_correct = False
         else:
             self.is_correct = (self.selected_option == self.question.correct_option)
         super().save(*args, **kwargs)

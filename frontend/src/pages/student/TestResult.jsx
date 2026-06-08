@@ -387,6 +387,23 @@ export default function TestResult() {
                     </div>
                 </div>
 
+                {/* ── AI Xulosa & Tavsiyalar ── */}
+                {showDetails && result.ai_feedback && (
+                    <div className="card bg-gradient-to-r from-indigo-50 via-purple-50 to-indigo-50 dark:from-slate-800 dark:via-slate-800 dark:to-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 p-6 rounded-3xl shadow-sm animate-fade-in relative overflow-hidden">
+                        <div className="absolute -top-10 -right-10 w-24 h-24 bg-indigo-200/40 rounded-full blur-2xl dark:bg-indigo-900/30" />
+                        <div className="flex items-center gap-3 mb-3 relative z-10">
+                            <span className="text-3xl animate-pulse">🤖</span>
+                            <div>
+                                <h3 className="font-extrabold text-indigo-950 dark:text-indigo-200 text-base">AI Xulosa & Tavsiyalar</h3>
+                                <p className="text-[11px] text-slate-400 dark:text-slate-400">Natijalaringiz asosida yaratilgan shaxsiy tavsiya</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium relative z-10 whitespace-pre-line">
+                            {result.ai_feedback}
+                        </p>
+                    </div>
+                )}
+
                 {/* ── Wrong answers breakdown ── */}
                 {showDetails && result.wrong_details?.length > 0 && (
                     <div className="card animate-fade-in">

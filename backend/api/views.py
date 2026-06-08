@@ -696,39 +696,44 @@ class StudentFinishAttemptView(APIView):
 
     def post(self, request, attempt_id):
         attempt = Attempt.objects.filter(
-            pk=attempt_id, student=request.user, is_completed=False).first()
+            pk=attempt_id, student=request.user).first()
         if not attempt:
-            return Response({'detail': 'Urinish topilmadi yoki tugallangan.'}, status=404)
+            return Response({'detail': 'Urinish topilmadi.'}, status=404)
 
-        # Per-pair scoring: matching_pairs questions give 1 point per correct pair
-        answers = Answer.objects.filter(attempt=attempt).select_related('question').prefetch_related('question__matching_pairs')
-        earned_points = 0
-        for ans in answers:
-            q = ans.question
-            if q.question_type == 'matching_pairs':
-                if ans.selected_matching:
-                    pairs = list(q.matching_pairs.all())
-                    for p in pairs:
-                        student_val = (ans.selected_matching.get(str(p.id))
-                                       or ans.selected_matching.get(p.id))
-                        if student_val is not None and str(student_val) == str(p.id):
-                            earned_points += 1
-            else:
-                if ans.is_correct:
-                    earned_points += 1
+        if not attempt.is_completed:
+            # Per-pair scoring: matching_pairs questions give 1 point per correct pair
+            answers = Answer.objects.filter(attempt=attempt).select_related('question').prefetch_related('question__matching_pairs')
+            earned_points = 0
+            for ans in answers:
+                q = ans.question
+                if q.question_type == 'matching_pairs':
+                    if ans.selected_matching:
+                        pairs = list(q.matching_pairs.all())
+                        for p in pairs:
+                            student_val = (ans.selected_matching.get(str(p.id))
+                                           or ans.selected_matching.get(p.id))
+                            if student_val is not None and str(student_val) == str(p.id):
+                                earned_points += 1
+                else:
+                    if ans.is_correct:
+                        earned_points += 1
 
-        attempt.score = earned_points
-        # Do not recalculate attempt.total_questions — it was correctly set when the attempt was started.
-        attempt.is_completed = True
-        attempt.submitted_at = timezone.now()
-        attempt.save()
+            attempt.score = earned_points
+            attempt.is_completed = True
+            attempt.submitted_at = timezone.now()
+            
+            # Generate AI Feedback
+            attempt.ai_feedback = self.generate_ai_feedback(attempt)
+            attempt.save()
 
-        # Gamification: Update user XP and Level
-        student = request.user
-        xp_earned = earned_points * 10
-        student.total_xp += xp_earned
-        student.level = (student.total_xp // 100) + 1
-        student.save()
+            # Gamification: Update user XP and Level
+            student = request.user
+            xp_earned = earned_points * 10
+            student.total_xp += xp_earned
+            student.level = (student.total_xp // 100) + 1
+            student.save()
+        else:
+            xp_earned = 0
 
         # Detailed results: each question + student's answer
         answers = Answer.objects.filter(attempt=attempt).select_related('question')
@@ -745,8 +750,8 @@ class StudentFinishAttemptView(APIView):
                 else:
                     wrong_details.append({
                         'question': ans.question.text,
-                        'your_answer': ans.selected_option,
-                        'correct_answer': ans.question.correct_option,
+                        'your_answer': ans.selected_option or ans.selected_text,
+                        'correct_answer': ans.question.correct_option or ans.question.correct_answer_text,
                         'explanation': ans.question.explanation,
                     })
 
@@ -757,9 +762,73 @@ class StudentFinishAttemptView(APIView):
             'grade': attempt.grade,
             'wrong_details': wrong_details,
             'xp_earned': xp_earned,
-            'new_level': student.level,
-            'total_xp': student.total_xp,
+            'new_level': request.user.level,
+            'total_xp': request.user.total_xp,
+            'ai_feedback': attempt.ai_feedback,
         })
+
+    def generate_ai_feedback(self, attempt):
+        from django.conf import settings
+        import os
+        import time
+        from google import genai as _genai
+
+        # Get list of answers
+        answers = Answer.objects.filter(attempt=attempt).select_related('question')
+        
+        correct_topics = []
+        incorrect_topics = []
+        
+        for ans in answers:
+            topic = ans.question.topic or "Boshqa mavzular"
+            if ans.is_correct:
+                correct_topics.append(topic)
+            else:
+                incorrect_topics.append(topic)
+                
+        # Count occurrences of topics
+        from collections import Counter
+        correct_counts = Counter(correct_topics)
+        incorrect_counts = Counter(incorrect_topics)
+        
+        # Prepare text for prompt
+        correct_summary = ", ".join([f"{topic} ({count} ta to'g'ri)" for topic, count in correct_counts.items()]) or "Yo'q"
+        incorrect_summary = ", ".join([f"{topic} ({count} ta xato)" for topic, count in incorrect_counts.items()]) or "Yo'q"
+        
+        prompt = (
+            "Siz Studex ta'lim platformasi tahlilchi AI yordamchisisiz. "
+            f"O'quvchi '{attempt.test.name}' mavzusidagi tarqatma material (test) ni yechdi.\n"
+            f"Natijalar:\n"
+            f"- Umumiy savollar soni: {attempt.total_questions}\n"
+            f"- O'quvchi to'plagan ball: {attempt.score} (Foiz: {attempt.percentage}%, Baho: {attempt.grade})\n"
+            f"- To'g'ri bajarilgan mavzular/savollar: {correct_summary}\n"
+            f"- Xato bajarilgan mavzular/savollar (o'quvchi orqada qolayotgan joylar): {incorrect_summary}\n\n"
+            "Iltimos, o'quvchi uchun 3-4 ta gapdan iborat qisqa, tushunarli va motivatsiya beruvchi xulosa (tahlil) yozib bering. "
+            "Unda o'quvchi aynan qaysi mavzularda (xato qilgan mavzulari asosida) oqsayotganini (orqada qolayotganini) ko'rsating "
+            "va uni yaxshilash uchun qisqa tavsiya bering. O'zbek tilida yozing."
+        )
+
+        api_key = getattr(settings, 'GEMINI_API_KEY', '') or os.environ.get('GEMINI_API_KEY', '')
+        if not api_key:
+            return "AI tahlil xizmati ulanmagan. Lekin xatolaringiz ustida ishlab, ko'proq mashq qilishni tavsiya etamiz!"
+
+        try:
+            client = _genai.Client(api_key=api_key)
+            models_to_try = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash']
+            for model_name in models_to_try:
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                    )
+                    if response.text:
+                        return response.text.strip()
+                except Exception:
+                    continue
+        except Exception:
+            pass
+
+        return "Natijangiz tahlil qilinmoqda. Ko'proq o'qib, mavzularni takrorlang!"
 
 
 class StudentHistoryView(APIView):
@@ -781,6 +850,7 @@ class StudentHistoryView(APIView):
                 'percentage': a.percentage,
                 'grade': a.grade,
                 'submitted_at': a.submitted_at,
+                'ai_feedback': a.ai_feedback,
             })
         return Response(data)
 
