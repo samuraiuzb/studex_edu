@@ -171,6 +171,17 @@ export default function Navbar() {
 
                                     {/* Actions */}
                                     <div className="px-3 py-3 space-y-1">
+                                        {/* My Profile */}
+                                        {(user?.role === 'student' || user?.role === 'guest') && (
+                                            <Link
+                                                to="/student/profile"
+                                                onClick={() => setProfileOpen(false)}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-left"
+                                            >
+                                                <span className="text-base">👤</span> Mening profilim
+                                            </Link>
+                                        )}
+
                                         {/* Edit profile */}
                                         <button
                                             onClick={() => { setEditOpen(true); setProfileOpen(false) }}

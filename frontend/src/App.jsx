@@ -23,6 +23,7 @@ import StudentHistory from './pages/student/History'
 import StudentMaterials from './pages/student/Materials'
 import MaterialHandout from './pages/student/MaterialHandout'
 import Leaderboard from './pages/student/Leaderboard'
+import StudentProfile from './pages/student/Profile'
 
 // Protected route wrapper
 // guestAllowed=false means this route is strictly student/teacher only (no guests)
@@ -70,6 +71,7 @@ function AppRoutes() {
             <Route path="/student/result/:id" element={<Protected role="student" guestAllowed={false}><TestResult /></Protected>} />
             <Route path="/student/history" element={<Protected role="student" guestAllowed={false}><StudentHistory /></Protected>} />
             <Route path="/student/leaderboard" element={<Protected role="student"><Leaderboard /></Protected>} />
+            <Route path="/student/profile" element={<Protected role="student" guestAllowed={false}><StudentProfile /></Protected>} />
 
             {/* Default redirect */}
             <Route path="/" element={

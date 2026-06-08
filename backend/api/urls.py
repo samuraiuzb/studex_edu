@@ -59,6 +59,7 @@ urlpatterns = [
     path('student/progress/', views.StudentProgressView.as_view(), name='student-progress'),
     path('student/analytics/', views.StudentAnalyticsView.as_view(), name='student-analytics'),
 
+    path('student/profile-stats/', views.StudentProfileStatsView.as_view(), name='student-profile-stats'),
     # ─── Chatbot ──────────────────────────────────────────────────────
     path('chat/<int:attempt_id>/', views.ChatView.as_view(), name='chat'),
 ]

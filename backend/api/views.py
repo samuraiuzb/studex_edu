@@ -9,7 +9,7 @@ import io
 from datetime import datetime
 
 from django.utils import timezone
-from django.db.models import Count, Avg, Q, Sum
+from django.db.models import Count, Avg, Q, Sum, F
 from django.http import HttpResponse
 from rest_framework import status, generics, permissions, serializers
 from rest_framework.decorators import api_view, permission_classes
@@ -1316,4 +1316,126 @@ class PublicTestQuestionsView(APIView):
             'time_limit': test.time_limit,
             'chatbot_mode': test.chatbot_mode,
             'questions': QuestionSerializer(q_list, many=True).data,
+        })
+
+
+class StudentProfileStatsView(APIView):
+    """GET /api/student/profile-stats/ — Student detailed stats for profile page."""
+    permission_classes = [IsStudent]
+
+    def get(self, request):
+        student = request.user
+        
+        # 1. Total questions answered
+        total_answers = Answer.objects.filter(attempt__student=student).count()
+        
+        # 2. Total unique topics practiced
+        unique_topics = Answer.objects.filter(attempt__student=student, question__topic__isnull=False).exclude(question__topic="").values('question__topic').distinct().count()
+        
+        # 3. Weekly activity (current week Mon to Sun)
+        # Find start of current week (Monday)
+        now = timezone.now()
+        start_of_week = now - timezone.timedelta(days=now.weekday())
+        start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        weekly_stats = []
+        days_names = ['Du', 'Se', 'Cho', 'Pa', 'Ju', 'Sha', 'Ya']
+        # Calculate daily counts for the current week
+        for i in range(7):
+            day_start = start_of_week + timezone.timedelta(days=i)
+            day_end = day_start + timezone.timedelta(days=1)
+            count = Answer.objects.filter(
+                attempt__student=student,
+                answered_at__range=(day_start, day_end)
+            ).count()
+            weekly_stats.append({
+                'day_name': days_names[i],
+                'date': day_start.day,
+                'count': count
+            })
+            
+        # Stats summary
+        incomplete_days = sum(1 for d in weekly_stats if d['count'] == 0)
+        normal_days = sum(1 for d in weekly_stats if 0 < d['count'] < 5)
+        best_days = sum(1 for d in weekly_stats if d['count'] >= 5)
+
+        # 4. Activity trend (last 7 days including today)
+        trend_stats = []
+        for i in range(6, -1, -1):
+            day_start = now - timezone.timedelta(days=i)
+            day_start = day_start.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day_start + timezone.timedelta(days=1)
+            count = Answer.objects.filter(
+                attempt__student=student,
+                answered_at__range=(day_start, day_end)
+            ).count()
+            # Label
+            label = "Bugun" if i == 0 else day_start.strftime('%a')
+            # Translate English abbreviations to Uzbek if needed
+            abbrev_map = {'Mon': 'Du', 'Tue': 'Se', 'Wed': 'Cho', 'Thu': 'Pa', 'Fri': 'Ju', 'Sat': 'Sha', 'Sun': 'Ya'}
+            label = abbrev_map.get(label, label)
+            trend_stats.append({
+                'name': label,
+                'savollar': count
+            })
+
+        # 5. Practice by category (donut chart)
+        categories = Answer.objects.filter(
+            attempt__student=student,
+            question__topic__isnull=False
+        ).exclude(question__topic="").values('question__topic').annotate(count=Count('id')).order_by('-count')[:5]
+        
+        category_stats = []
+        for c in categories:
+            category_stats.append({
+                'name': c['question__topic'],
+                'value': c['count']
+            })
+
+        # 6. Achievements list
+        achievements = []
+        
+        # Achievement 1: Beginner (unlocked by default)
+        achievements.append({
+            'id': 'lvl1', 'title': "Boshlovchi", 
+            'desc': "Platformadan muvaffaqiyatli ro'yxatdan o'tdingiz", 'icon': "🌱", 'unlocked': True
+        })
+        
+        # Achievement 2: Level 5
+        achievements.append({
+            'id': 'lvl5', 'title': "Bilimdon", 
+            'desc': f"5-darajaga erishish (Hozirgi: Lvl {student.level})", 'icon': "🚀", 'unlocked': student.level >= 5
+        })
+        
+        # Achievement 3: Perfect Score on any test
+        has_perfect = Attempt.objects.filter(student=student, score=F('total_questions'), total_questions__gt=0).exists()
+        achievements.append({
+            'id': 'perfect', 'title': "Mukammal Natija",
+            'desc': "Kamida bitta testdan 100% ball to'plash", 'icon': "🎯", 'unlocked': has_perfect
+        })
+        
+        # Achievement 4: Math master (completed 5 tests)
+        completed_count = Attempt.objects.filter(student=student, is_completed=True).count()
+        achievements.append({
+            'id': 'math_master', 'title': "Matematik",
+            'desc': f"Kamida 5 ta testni to'liq yakunlash (Hozir: {completed_count})", 'icon': "🏆", 'unlocked': completed_count >= 5
+        })
+
+        unlocked_count = sum(1 for a in achievements if a['unlocked'])
+
+        # Daily average
+        daily_average = round(total_answers / 7, 1)
+
+        return Response({
+            'total_answers': total_answers,
+            'unique_topics': unique_topics,
+            'weekly_stats': weekly_stats,
+            'incomplete_days': incomplete_days,
+            'normal_days': normal_days,
+            'best_days': best_days,
+            'trend_stats': trend_stats,
+            'category_stats': category_stats,
+            'achievements': achievements,
+            'unlocked_count': unlocked_count,
+            'daily_average': daily_average
         })
