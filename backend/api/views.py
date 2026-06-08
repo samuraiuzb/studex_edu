@@ -658,6 +658,7 @@ class StudentSubmitAnswerView(APIView):
         # for matching pairs we expect a mapping in selected_matching
         selected_matching = request.data.get('selected_matching')
         selected_option = request.data.get('selected_option', '')
+        selected_text = request.data.get('selected_text', '')
         if isinstance(selected_option, str):
             selected_option = selected_option.upper()
 
@@ -669,6 +670,8 @@ class StudentSubmitAnswerView(APIView):
         defaults = {}
         if question.question_type == 'matching_pairs':
             defaults['selected_matching'] = selected_matching
+        elif question.question_type in ['find_equation', 'draw_graph']:
+            defaults['selected_text'] = selected_text
         else:
             defaults['selected_option'] = selected_option
 
@@ -679,14 +682,18 @@ class StudentSubmitAnswerView(APIView):
         if not created:
             if question.question_type == 'matching_pairs':
                 answer.selected_matching = selected_matching
+            elif question.question_type in ['find_equation', 'draw_graph']:
+                answer.selected_text = selected_text
             else:
                 answer.selected_option = selected_option
             answer.save()
 
         resp = {'is_correct': answer.is_correct,
                 'explanation': question.explanation if not answer.is_correct else ''}
-        if question.question_type != 'matching_pairs':
+        if question.question_type == 'multiple_choice':
             resp['correct_option'] = question.correct_option
+        elif question.question_type in ['find_equation', 'draw_graph']:
+            resp['correct_answer_text'] = question.correct_answer_text
         return Response(resp)
 
 
@@ -775,11 +782,18 @@ class StudentFinishAttemptView(APIView):
                         'correct_answer': 'Har bir element o\'z juftiga mos kelishi kerak',
                         'explanation': explanation,
                     })
+                elif ans.question.question_type in ['find_equation', 'draw_graph']:
+                    wrong_details.append({
+                        'question': ans.question.text,
+                        'your_answer': ans.selected_text,
+                        'correct_answer': ans.question.correct_answer_text,
+                        'explanation': explanation,
+                    })
                 else:
                     wrong_details.append({
                         'question': ans.question.text,
-                        'your_answer': ans.selected_option or ans.selected_text,
-                        'correct_answer': ans.question.correct_option or ans.question.correct_answer_text,
+                        'your_answer': ans.selected_option,
+                        'correct_answer': ans.question.correct_option,
                         'explanation': explanation,
                     })
 
@@ -825,7 +839,7 @@ class StudentFinishAttemptView(APIView):
             "{\n"
             "  \"summary\": \"O'quvchi uchun 3-4 ta gapdan iborat umumiy xulosa va qaysi mavzularda oqsayotgani bo'yicha motivatsion tavsiya.\",\n"
             "  \"explanations\": {\n"
-            "    \"<savol_tartib_raqami>\": \"Ushbu xato qilingan savol uchun qisqa, 1-2 gapdan iborat o'zbekcha tushuntirish va to'g'ri yechish usuli (savol tartib raqami kalit sifatida, masalan \\\"1\\\", \\\"2\\\"). Matematik formulalar va belgilarni faqat $LaTeX$ formatida yozing (masalan, $x^2 - 4 = 0$).\"\n"
+            "    \"<savol_tartib_raqami>\": \"Ushbu xato qilingan savol uchun to'g'ri javob qaysiligini shunchaki aytish bilan cheklanmasdan, uni qanday yechish qoidasi, formulasi yoki usuli haqida 1-2 gapdan iborat qisqa xulosa va tushuntirish bering (savol tartib raqami kalit sifatida, masalan \\\"1\\\", \\\"2\\\"). Matematik formulalar va belgilarni faqat $LaTeX$ formatida yozing (masalan, $x^2 - 4 = 0$).\"\n"
             "  }\n"
             "}\n"
             "Javob faqat va faqat yaroqli JSON bo'lishi kerak. Hech qanday boshqa matn, markdown block (```json kabi) qo'shmang."
@@ -846,9 +860,11 @@ class StudentFinishAttemptView(APIView):
                     )
                     if response.text:
                         return response.text.strip()
-                except Exception:
+                except Exception as e:
+                    print(f"Gemini error with {model_name}: {e}")
                     continue
-        except Exception:
+        except Exception as e:
+            print(f"Gemini client initialization error: {e}")
             pass
 
         return "Natijangiz tahlil qilinmoqda. Ko'proq o'qib, mavzularni takrorlang!"
