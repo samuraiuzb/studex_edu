@@ -735,24 +735,52 @@ class StudentFinishAttemptView(APIView):
         else:
             xp_earned = 0
 
+        # Parse AI feedback if it contains JSON
+        ai_summary = ""
+        ai_explanations = {}
+        if attempt.ai_feedback:
+            import json
+            try:
+                # Clean markdown wrapper if any
+                clean_fb = attempt.ai_feedback.strip()
+                if clean_fb.startswith("```json"):
+                    clean_fb = clean_fb[7:]
+                if clean_fb.endswith("```"):
+                    clean_fb = clean_fb[:-3]
+                clean_fb = clean_fb.strip()
+                
+                data = json.loads(clean_fb)
+                if isinstance(data, dict):
+                    ai_summary = data.get('summary', '')
+                    ai_explanations = data.get('explanations', {})
+                else:
+                    ai_summary = attempt.ai_feedback
+            except Exception:
+                ai_summary = attempt.ai_feedback
+
         # Detailed results: each question + student's answer
         answers = Answer.objects.filter(attempt=attempt).select_related('question')
         wrong_details = []
-        for ans in answers:
+        for idx, ans in enumerate(answers, 1):
             if not ans.is_correct:
+                # Get explanation. If empty, try to get AI generated explanation
+                explanation = ans.question.explanation
+                if not explanation:
+                    explanation = ai_explanations.get(str(idx)) or ai_explanations.get(str(ans.question.id)) or ""
+
                 if ans.question.question_type == 'matching_pairs':
                     wrong_details.append({
                         'question': ans.question.text,
                         'your_answer': ans.selected_matching,
                         'correct_answer': 'Har bir element o\'z juftiga mos kelishi kerak',
-                        'explanation': ans.question.explanation,
+                        'explanation': explanation,
                     })
                 else:
                     wrong_details.append({
                         'question': ans.question.text,
                         'your_answer': ans.selected_option or ans.selected_text,
                         'correct_answer': ans.question.correct_option or ans.question.correct_answer_text,
-                        'explanation': ans.question.explanation,
+                        'explanation': explanation,
                     })
 
         return Response({
@@ -764,7 +792,7 @@ class StudentFinishAttemptView(APIView):
             'xp_earned': xp_earned,
             'new_level': request.user.level,
             'total_xp': request.user.total_xp,
-            'ai_feedback': attempt.ai_feedback,
+            'ai_feedback': ai_summary or attempt.ai_feedback,
         })
 
     def generate_ai_feedback(self, attempt):
@@ -776,36 +804,31 @@ class StudentFinishAttemptView(APIView):
         # Get list of answers
         answers = Answer.objects.filter(attempt=attempt).select_related('question')
         
-        correct_topics = []
-        incorrect_topics = []
-        
-        for ans in answers:
-            topic = ans.question.topic or "Boshqa mavzular"
-            if ans.is_correct:
-                correct_topics.append(topic)
-            else:
-                incorrect_topics.append(topic)
-                
-        # Count occurrences of topics
-        from collections import Counter
-        correct_counts = Counter(correct_topics)
-        incorrect_counts = Counter(incorrect_topics)
-        
-        # Prepare text for prompt
-        correct_summary = ", ".join([f"{topic} ({count} ta to'g'ri)" for topic, count in correct_counts.items()]) or "Yo'q"
-        incorrect_summary = ", ".join([f"{topic} ({count} ta xato)" for topic, count in incorrect_counts.items()]) or "Yo'q"
-        
         prompt = (
-            "Siz Studex ta'lim platformasi tahlilchi AI yordamchisisiz. "
-            f"O'quvchi '{attempt.test.name}' mavzusidagi tarqatma material (test) ni yechdi.\n"
+            "Siz Studex ta'lim platformasi tahlilchisi va matematika o'qituvchisisiz. "
+            f"O'quvchi '{attempt.test.name}' mavzusidagi testni yechdi.\n"
             f"Natijalar:\n"
-            f"- Umumiy savollar soni: {attempt.total_questions}\n"
-            f"- O'quvchi to'plagan ball: {attempt.score} (Foiz: {attempt.percentage}%, Baho: {attempt.grade})\n"
-            f"- To'g'ri bajarilgan mavzular/savollar: {correct_summary}\n"
-            f"- Xato bajarilgan mavzular/savollar (o'quvchi orqada qolayotgan joylar): {incorrect_summary}\n\n"
-            "Iltimos, o'quvchi uchun 3-4 ta gapdan iborat qisqa, tushunarli va motivatsiya beruvchi xulosa (tahlil) yozib bering. "
-            "Unda o'quvchi aynan qaysi mavzularda (xato qilgan mavzulari asosida) oqsayotganini (orqada qolayotganini) ko'rsating "
-            "va uni yaxshilash uchun qisqa tavsiya bering. O'zbek tilida yozing."
+            f"- Ball: {attempt.score}/{attempt.total_questions} (Foiz: {attempt.percentage}%, Baho: {attempt.grade})\n"
+            "Savollar tahlili:\n"
+        )
+        for idx, ans in enumerate(answers, 1):
+            status = "To'g'ri" if ans.is_correct else "Xato"
+            prompt += f"{idx}-savol: {ans.question.text}\n   Mavzu: {ans.question.topic or 'Boshqa'}\n   Holati: {status}\n"
+            if not ans.is_correct:
+                if ans.question.question_type == 'multiple_choice':
+                    prompt += f"   O'quvchi javobi: {ans.selected_option}, To'g'ri javob: {ans.question.correct_option}\n"
+                elif ans.question.question_type in ['find_equation', 'draw_graph']:
+                    prompt += f"   O'quvchi javobi: {ans.selected_text}, To'g'ri javob: {ans.question.correct_answer_text}\n"
+
+        prompt += (
+            "\nQuyidagi JSON formatda o'zbek tilida javob qaytaring:\n"
+            "{\n"
+            "  \"summary\": \"O'quvchi uchun 3-4 ta gapdan iborat umumiy xulosa va qaysi mavzularda oqsayotgani bo'yicha motivatsion tavsiya.\",\n"
+            "  \"explanations\": {\n"
+            "    \"<savol_tartib_raqami>\": \"Ushbu xato qilingan savol uchun qisqa, 1-2 gapdan iborat o'zbekcha tushuntirish va to'g'ri yechish usuli (savol tartib raqami kalit sifatida, masalan \\\"1\\\", \\\"2\\\"). Matematik formulalar va belgilarni faqat $LaTeX$ formatida yozing (masalan, $x^2 - 4 = 0$).\"\n"
+            "  }\n"
+            "}\n"
+            "Javob faqat va faqat yaroqli JSON bo'lishi kerak. Hech qanday boshqa matn, markdown block (```json kabi) qo'shmang."
         )
 
         api_key = getattr(settings, 'GEMINI_API_KEY', '') or os.environ.get('GEMINI_API_KEY', '')
@@ -842,6 +865,22 @@ class StudentHistoryView(APIView):
 
         data = []
         for a in attempts:
+            ai_summary = a.ai_feedback
+            if a.ai_feedback:
+                import json
+                try:
+                    clean_fb = a.ai_feedback.strip()
+                    if clean_fb.startswith("```json"):
+                        clean_fb = clean_fb[7:]
+                    if clean_fb.endswith("```"):
+                        clean_fb = clean_fb[:-3]
+                    clean_fb = clean_fb.strip()
+                    
+                    js_data = json.loads(clean_fb)
+                    if isinstance(js_data, dict):
+                        ai_summary = js_data.get('summary', '')
+                except Exception:
+                    pass
             data.append({
                 'attempt_id': a.id,
                 'test_name': a.test.name,
@@ -850,7 +889,7 @@ class StudentHistoryView(APIView):
                 'percentage': a.percentage,
                 'grade': a.grade,
                 'submitted_at': a.submitted_at,
-                'ai_feedback': a.ai_feedback,
+                'ai_feedback': ai_summary,
             })
         return Response(data)
 

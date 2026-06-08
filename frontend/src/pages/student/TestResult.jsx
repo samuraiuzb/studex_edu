@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
+import MathText from '../../components/MathText'
 import api from '../../api/client'
 import toast from 'react-hot-toast'
 
@@ -411,19 +412,23 @@ export default function TestResult() {
                         <div className="space-y-4">
                             {result.wrong_details.map((w, i) => (
                                 <div key={i} className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 animate-slide-in" style={{ animationDelay: `${i * 0.08}s` }}>
-                                    <p className="font-medium text-sm mb-2">{i + 1}. {w.question}</p>
-                                    <div className="flex gap-3 text-xs flex-wrap">
+                                    <div className="font-medium text-sm mb-2 flex items-start gap-1">
+                                        <span className="flex-shrink-0">{i + 1}.</span>
+                                        <MathText text={w.question} />
+                                    </div>
+                                    <div className="flex gap-3 text-xs flex-wrap items-center">
                                         <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                                            ❌ Sizning javob: <strong>{w.your_answer}</strong>
+                                            ❌ Sizning javob: <strong>{typeof w.your_answer === 'object' ? JSON.stringify(w.your_answer) : <MathText text={String(w.your_answer || '')} />}</strong>
                                         </span>
                                         <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                                            ✅ To'g'ri javob: <strong>{w.correct_answer}</strong>
+                                            ✅ To'g'ri javob: <strong>{typeof w.correct_answer === 'object' ? JSON.stringify(w.correct_answer) : <MathText text={String(w.correct_answer || '')} />}</strong>
                                         </span>
                                     </div>
                                     {w.explanation && (
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 italic">
-                                            💡 {w.explanation}
-                                        </p>
+                                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-2 italic flex items-start gap-1">
+                                            <span className="flex-shrink-0">💡</span>
+                                            <MathText text={w.explanation} />
+                                        </div>
                                     )}
                                 </div>
                             ))}
