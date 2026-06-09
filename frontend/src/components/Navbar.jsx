@@ -38,9 +38,7 @@ export default function Navbar() {
     const [editOpen, setEditOpen] = useState(false)
     const dropdownRef = useRef(null)
 
-    const links = user?.role === 'teacher' ? teacherLinks : (
-        user?.role === 'guest' ? studentLinks.filter(l => l.to !== '/student/history') : studentLinks
-    )
+    const links = user?.role === 'teacher' ? teacherLinks : studentLinks
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -146,7 +144,7 @@ export default function Navbar() {
                                             <p className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">{displayName}</p>
                                             <p className="text-xs text-slate-500 dark:text-slate-400">@{user?.username}</p>
                                             <span className="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full mt-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
-                                                {user?.role === 'teacher' ? "👨‍🏫 O'qituvchi" : (user?.role === 'guest' ? "👤 Mehmon" : `🎓 ${user?.class_name || "O'quvchi"}`)}
+                                                {user?.role === 'teacher' ? "👨‍🏫 O'qituvchi" : `🎓 ${user?.class_name || "O'quvchi"}`}
                                             </span>
                                         </div>
                                     </div>
@@ -172,7 +170,7 @@ export default function Navbar() {
                                     {/* Actions */}
                                     <div className="px-3 py-3 space-y-1">
                                         {/* My Profile */}
-                                        {(user?.role === 'student' || user?.role === 'guest') && (
+                                        {user?.role === 'student' && (
                                             <Link
                                                 to="/student/profile"
                                                 onClick={() => setProfileOpen(false)}

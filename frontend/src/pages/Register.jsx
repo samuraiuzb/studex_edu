@@ -93,8 +93,8 @@ export default function Register() {
                         </div>
                         {form.role === 'student' && (
                             <div>
-                                <label className="input-label">Taklif kodi</label>
-                                <input className="input" placeholder="Masalan: ABCD12" value={form.invite_code} onChange={set('invite_code')} required />
+                                <label className="input-label">Taklif kodi (ixtiyoriy)</label>
+                                <input className="input" placeholder="Masalan: ABCD12 (ixtiyoriy)" value={form.invite_code} onChange={set('invite_code')} />
                             </div>
                         )}
                         <div>

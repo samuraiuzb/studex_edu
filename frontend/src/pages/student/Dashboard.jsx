@@ -46,32 +46,23 @@ export default function StudentDashboard() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        const isGuest = user?.role === 'guest'
-        if (isGuest) {
-            // Guests only need public tests list
-            api.get('/student/tests/')
-                .then(r => setTests(r.data))
-                .catch(() => { })
-                .finally(() => setLoading(false))
-        } else {
-            Promise.all([
-                api.get('/student/tests/'),
-                api.get('/student/history/'),
-                api.get('/student/progress/'),
-                api.get('/student/my-classrooms/'),
-                api.get('/student/analytics/').catch(() => ({ data: null })),
-            ])
-                .then(([t, h, p, c, a]) => {
-                    setTests(t.data)
-                    setHistory(h.data.slice(0, 5))
-                    setProgress(p.data)
-                    setClassrooms(c.data)
-                    if (a.data) setAnalytics(a.data)
-                })
-                .catch(() => toast.error('Ma\'lumot yuklanmadi'))
-                .finally(() => setLoading(false))
-        }
-    }, [user?.role])
+        Promise.all([
+            api.get('/student/tests/'),
+            api.get('/student/history/'),
+            api.get('/student/progress/'),
+            api.get('/student/my-classrooms/'),
+            api.get('/student/analytics/').catch(() => ({ data: null })),
+        ])
+            .then(([t, h, p, c, a]) => {
+                setTests(t.data)
+                setHistory(h.data.slice(0, 5))
+                setProgress(p.data)
+                setClassrooms(c.data)
+                if (a.data) setAnalytics(a.data)
+            })
+            .catch(() => toast.error('Ma\'lumot yuklanmadi'))
+            .finally(() => setLoading(false))
+    }, [])
 
     if (loading) return (
         <div className="min-h-screen">
@@ -93,21 +84,17 @@ export default function StudentDashboard() {
                 {/* Hero */}
                 <div className="hero-gradient rounded-3xl p-7 text-white shadow-xl">
                     <h1 className="text-2xl font-extrabold">
-                        Xush kelibsiz, {user?.role === 'guest' ? 'Mehmon' : (user?.full_name || user?.username)}! 👋
+                        Xush kelibsiz, {user?.full_name || user?.username}! 👋
                     </h1>
                     <p className="opacity-80 mt-1">
-                        {user?.role === 'guest' ? 'Platformani o\'rganish rejimi' : (user?.class_name ? `${user.class_name}-sinf o'quvchisi` : 'O\'quvchi')}
+                        {user?.class_name ? `${user.class_name}-sinf o'quvchisi` : 'O\'quvchi'}
                     </p>
                     <div className="flex gap-3 mt-4 flex-wrap">
-                        {user?.role !== 'guest' && (
-                            <Link to="/student/join-classroom" className="bg-white hover:bg-slate-100 text-indigo-700 font-bold px-4 py-2 rounded-xl text-sm transition shadow-lg flex items-center gap-2">
-                                <span>➕ Sinfga qo'shilish</span>
-                            </Link>
-                        )}
+                        <Link to="/student/join-classroom" className="bg-white hover:bg-slate-100 text-indigo-700 font-bold px-4 py-2 rounded-xl text-sm transition shadow-lg flex items-center gap-2">
+                            <span>➕ Sinfga qo'shilish</span>
+                        </Link>
                         <Link to="/student/materials" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-semibold transition">📚 Materiallar</Link>
-                        {user?.role !== 'guest' && (
-                            <Link to="/student/history" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-semibold transition">📈 Natijalarim</Link>
-                        )}
+                        <Link to="/student/history" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-semibold transition">📈 Natijalarim</Link>
                         <Link to="/student/leaderboard" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-semibold transition">🏆 Reyting</Link>
                     </div>
                 </div>
@@ -135,7 +122,7 @@ export default function StudentDashboard() {
                 )}
 
                 {/* Progress section */}
-                {progress && user?.role !== 'guest' && (
+                {progress && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {/* Materials progress */}
                         <div className="card flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4">
@@ -272,7 +259,7 @@ export default function StudentDashboard() {
                 </section>
 
                 {/* Recent history */}
-                {history.length > 0 && user?.role !== 'guest' && (
+                {history.length > 0 && (
                     <section>
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold">📊 So'nggi natijalar</h2>

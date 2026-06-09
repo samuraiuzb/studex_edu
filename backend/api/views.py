@@ -495,6 +495,8 @@ class JoinClassroomView(APIView):
             return Response({'detail': 'Siz allaqachon bu sinfga qo\'shilgansiz'}, status=400)
             
         classroom.students.add(request.user)
+        request.user.class_name = classroom.name
+        request.user.save()
         return Response({
             'detail': f"'{classroom.name}' sinfiga muvaffaqiyatli qo'shildingiz",
             'classroom': ClassroomSerializer(classroom).data

@@ -91,14 +91,17 @@ export default function StudentProfile() {
                                 {user?.full_name || user?.username}
                             </h1>
                             <p className="text-sm text-slate-400 dark:text-slate-400 font-medium">
-                                @{user?.username} &nbsp;|&nbsp; {user?.class_name ? `${user.class_name}-sinf` : 'O\'quvchi'}
+                                @{user?.username} &nbsp;|&nbsp; {user?.class_name ? `${user.class_name}-sinf` : 'Sinfga qo\'shilmagan'}
                             </p>
                             <p className="text-xs text-indigo-500 dark:text-indigo-400 font-bold mt-1">
                                 Lvl {user?.level || 1} &nbsp;•&nbsp; {user?.total_xp || 0} XP
                             </p>
                         </div>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 flex-wrap justify-center md:justify-end">
+                        <Link to="/student/join-classroom" className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold px-5 py-2.5 rounded-xl text-sm transition hover:scale-105 shadow-sm flex items-center gap-1.5">
+                            ➕ Sinfga qo'shilish
+                        </Link>
                         <Link to="/student" className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold px-5 py-2.5 rounded-xl text-sm transition hover:scale-105 shadow-sm">
                             🏠 Dashbord
                         </Link>

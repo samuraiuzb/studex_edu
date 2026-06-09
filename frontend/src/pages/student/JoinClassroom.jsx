@@ -6,8 +6,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import api from '../../api/client'
 import toast from 'react-hot-toast'
+import { useAuth } from '../../context/AuthContext'
 
 export default function JoinClassroom() {
+    const { refreshUser } = useAuth()
     const [inviteCode, setInviteCode] = useState('')
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
@@ -22,6 +24,7 @@ export default function JoinClassroom() {
         setLoading(true)
         try {
             const { data } = await api.post('/student/join-classroom/', { invite_code: inviteCode.toUpperCase() })
+            await refreshUser()
             toast.success(data.detail)
             navigate('/student', { replace: true })
         } catch (error) {
